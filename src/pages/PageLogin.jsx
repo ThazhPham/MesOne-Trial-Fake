@@ -10,6 +10,7 @@ import apiServer
 import { Popup } from 'devextreme-react/popup';
 import { Button } from 'devextreme-react/button';
 
+
 import '../css/PageLogin.css';
 import { useNavigate } from 'react-router-dom';
 
@@ -46,6 +47,8 @@ export default function PageLogin() {
         useState(false);
 
     const dropdownRef = useRef(null);
+
+    const [loading, setLoading] = useState(false);
 
     // =====================
     // CLOSE DROPDOWN ON OUTSIDE CLICK
@@ -130,34 +133,29 @@ export default function PageLogin() {
     // LOGIN
     // =====================
 
-    const login =
-        async () => {
+    const handleLogin = async () => {
+        setLoading(true); // 👈 bật loading
 
-            const user =
-                await apiServer.login(
-
-                    username,
-
-                    password
-
-                );
-
-            console.log(user);
+        try {
+            const user = await apiServer.login(username, password); // hoặc axios login của bạn
 
             if (user) {
+                // giả lập delay (nếu bạn muốn thấy loading)
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
-                alert(
-                    'Login Success'
-                );
                 // chuyển trang
                 navigate("/dashboard");
             } else {
-
-                alert(
-                    'Login Failed'
-                );
+                alert("Login Failed");
             }
-        };
+
+        } catch (err) {
+            console.log(err);
+            alert("Error login");
+        } finally {
+            setLoading(false); // 👈 luôn tắt loading
+        }
+    };
 
     // =====================
     // GET LABEL BY LANG
@@ -244,9 +242,10 @@ export default function PageLogin() {
                     />
 
                     <button
-                        onClick={login}
+                        onClick={handleLogin}
+                        disabled={loading}
                     >
-                        {t('ĐĂNG NHẬP', 'LOGIN')}
+                        {loading ? "Đang đăng nhập..." : "Login"}
                     </button>
 
                     {/* ===================== */}

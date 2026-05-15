@@ -188,6 +188,36 @@ class AuthService {
             body
         );
     }
+
+    // DASHBOARD DATA
+    // - Không truyền tham số: lấy dữ liệu mặc định (filtering rỗng)
+    // - Truyền dateFrom, dateTo: lọc theo khoảng ngày
+    async getDashboardData(dateFrom, dateTo) {
+
+        const filtering = (dateFrom && dateTo)
+            ? [{
+                columName: "Date",
+                valueDefault: dateFrom,
+                valueSecond: dateTo,
+                dataValue: "dateTime",
+                typeFilter: "between"
+            }]
+            : [];
+
+        const body = {
+            signature: 398,
+            functionCode: "GETDATACUSTOMIZE",
+            MenuCd: "DB01",
+            type: 10,
+            filtering
+        };
+
+        // TODO: Cập nhật URL endpoint chính xác nếu cần
+        return await this.repository.post(
+            '/Inventory/DataService/GetData',
+            body
+        );
+    }
 }
 
 // ======================
