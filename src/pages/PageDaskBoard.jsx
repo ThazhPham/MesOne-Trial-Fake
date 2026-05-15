@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import apiServer from "../api/apiServer";
 import Chart, {
     Series,
@@ -7,6 +7,58 @@ import Chart, {
     Tooltip
 } from "devextreme-react/chart";
 import "../css/PageDaskBoard.css";
+
+const formatNumber = (value) =>
+    Number(value || 0).toLocaleString();
+
+const parseDashboardSection = (data, key) => {
+
+    const value = data?.Data?.[key];
+
+    if (!value) {
+        return [];
+    }
+
+    return JSON.parse(value);
+};
+
+const getDaysBetween = (startDate, endDate) => {
+
+    const start =
+        new Date(startDate);
+
+    const end =
+        new Date(endDate);
+
+    if (Number.isNaN(start.getTime()) ||
+        Number.isNaN(end.getTime())) {
+        return 0;
+    }
+
+    return Math.floor(
+        (end - start) / 86400000
+    ) + 1;
+};
+
+const getDateRangeError = (
+    fromDate,
+    toDate
+) => {
+
+    if (!fromDate || !toDate) {
+        return "Please select both from and to dates";
+    }
+
+    if (fromDate > toDate) {
+        return "From date must be before to date";
+    }
+
+    if (getDaysBetween(fromDate, toDate) > 31) {
+        return "Date range cannot exceed 31 days";
+    }
+
+    return null;
+};
 
 export default function PageDashboard() {
 
@@ -50,7 +102,18 @@ export default function PageDashboard() {
     // LOAD DASHBOARD API
     // =========================
 
-    const loadDashboard = async () => {
+    const loadDashboard = useCallback(async () => {
+
+        const dateRangeError =
+            getDateRangeError(
+                fromDate,
+                toDate
+            );
+
+        if (dateRangeError) {
+            setError(dateRangeError);
+            return;
+        }
 
         try {
 
@@ -73,33 +136,25 @@ export default function PageDashboard() {
             // PARSE CHART DATA
             // =========================
 
+            const summaryData =
+                parseDashboardSection(
+                    data,
+                    "SU00TT0001"
+                )[0] || {};
+
             const chartData =
-                data?.Data?.CH00TT0004
-                    ? JSON.parse(
-                        data.Data.CH00TT0004
-                    )
-                    : [];
+                parseDashboardSection(
+                    data,
+                    "CH00TT0004"
+                );
 
             console.log(
                 "CHART DATA:",
                 chartData
             );
 
-            // SAVE
-            setDashboardData(chartData);
-            const chartRaw = data?.Data?.CH00TT0004;
-
-            if (chartRaw) {
-
-                const parsed =
-                    JSON.parse(chartRaw);
-
-                setChartData(parsed);
-
-            } else {
-
-                setChartData([]);
-            }
+            setDashboardData(summaryData);
+            setChartData(chartData);
 
         } catch (err) {
 
@@ -113,7 +168,7 @@ export default function PageDashboard() {
 
             setLoading(false);
         }
-    };
+    }, [fromDate, toDate]);
 
     // =========================
     // AUTO LOAD
@@ -121,9 +176,16 @@ export default function PageDashboard() {
 
     useEffect(() => {
 
-        loadDashboard();
+        const timeoutId =
+            setTimeout(
+                loadDashboard,
+                0
+            );
 
-    }, []);
+        return () =>
+            clearTimeout(timeoutId);
+
+    }, [loadDashboard]);
 
     // =========================
     // SEARCH BUTTON
@@ -302,6 +364,7 @@ export default function PageDashboard() {
                         <button
                             className="dash-refresh-btn"
                             onClick={handleSearch}
+                            disabled={loading}
                         >
                             Search
                         </button>
@@ -349,7 +412,9 @@ export default function PageDashboard() {
                                     </div>
 
                                     <div className="dash-kpi-value">
-                                        12
+                                        {formatNumber(
+                                            dashboardData?.NumOfWO
+                                        )}
                                     </div>
                                 </div>
 
@@ -359,7 +424,9 @@ export default function PageDashboard() {
                                     </div>
 
                                     <div className="dash-kpi-value">
-                                        600
+                                        {formatNumber(
+                                            dashboardData?.PlanQty
+                                        )}
                                     </div>
                                 </div>
 
@@ -369,7 +436,9 @@ export default function PageDashboard() {
                                     </div>
 
                                     <div className="dash-kpi-value">
-                                        0
+                                        {formatNumber(
+                                            dashboardData?.ActualQty
+                                        )}
                                     </div>
                                 </div>
 
@@ -379,7 +448,9 @@ export default function PageDashboard() {
                                     </div>
 
                                     <div className="dash-kpi-value">
-                                        0
+                                        {formatNumber(
+                                            dashboardData?.DefectQty
+                                        )}
                                     </div>
                                 </div>
 
@@ -394,7 +465,7 @@ export default function PageDashboard() {
                                 </h3>
 
                                 <Chart
-                                    dataSource={dashboardData}
+                                    dataSource={chartData}
                                     palette="Soft Blue"
                                 >
 
