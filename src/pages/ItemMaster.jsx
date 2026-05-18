@@ -1,13 +1,15 @@
-// pages/ItemMasterPage.jsx
+// pages/ItemMaster.jsx
 
 import {
     useEffect,
-    useState
+    useState,
+    useCallback
 } from "react";
 
 import DataGrid, {
     Column,
     Paging,
+    Pager,
     SearchPanel
 } from "devextreme-react/data-grid";
 
@@ -15,48 +17,97 @@ import apiServer from "../api/apiServer";
 
 export default function ItemMasterPage() {
 
+    // =========================
+    // STATE
+    // =========================
+
     const [data, setData] =
         useState([]);
 
     const [loading, setLoading] =
         useState(false);
 
+    const [pageIndex, setPageIndex] =
+        useState(1);
+
+    const [pageSize] =
+        useState(20);
+
+    const [totalRows, setTotalRows] =
+        useState(0);
+
     // =========================
     // LOAD DATA
+    // =========================
+
+    const loadData =
+        useCallback(async () => {
+
+            try {
+
+                setLoading(true);
+
+                const res =
+                    await apiServer.getItemMaster(
+                        pageIndex,
+                        pageSize
+                    );
+
+                console.log(
+                    "ITEM MASTER:",
+                    res
+                );
+
+                // API ARRAY
+                const list =
+                    Array.isArray(res?.Data)
+                        ? res.Data
+                        : [];
+
+                setData(list);
+
+                // TOTAL ROW
+                if (list.length > 0) {
+
+                    setTotalRows(
+                        list[0].totalRows || 0
+                    );
+                }
+
+            } catch (err) {
+
+                console.log(err);
+
+            } finally {
+
+                setLoading(false);
+            }
+
+        }, [pageIndex, pageSize]);
+
+    // =========================
+    // EFFECT
     // =========================
 
     useEffect(() => {
 
         loadData();
+    }, [loadData]);
 
-    }, []);
+    // =========================
+    // PAGING
+    // =========================
 
-    const loadData = async () => {
+    const onOptionChanged = (e) => {
 
-        try {
+        if (
+            e.fullName ===
+            "paging.pageIndex"
+        ) {
 
-            setLoading(true);
-
-            const res =
-                await apiServer.getItemMaster();
-
-            console.log(
-                "ITEM MASTER:",
-                res
+            setPageIndex(
+                e.value + 1
             );
-
-            // DATA API
-            setData(
-                res.Data || []
-            );
-
-        } catch (err) {
-
-            console.log(err);
-
-        } finally {
-
-            setLoading(false);
         }
     };
 
@@ -75,9 +126,13 @@ export default function ItemMasterPage() {
             <DataGrid
                 dataSource={data}
                 showBorders={true}
+                remoteOperations={true}
                 hoverStateEnabled={true}
                 focusedRowEnabled={true}
                 keyExpr="ItemCode"
+                onOptionChanged={
+                    onOptionChanged
+                }
                 loading={loading}
             >
 
@@ -86,8 +141,19 @@ export default function ItemMasterPage() {
                 />
 
                 <Paging
-                    defaultPageSize={20}
+                    pageSize={pageSize}
                 />
+
+                <Pager
+                    visible={true}
+                    showInfo={true}
+                    showPageSizeSelector={false}
+                    infoText={
+                        "Page {0} of {1} ({2} items)"
+                    }
+                />
+
+                {/* COLUMN */}
 
                 <Column
                     dataField="ItemCode"
@@ -100,8 +166,37 @@ export default function ItemMasterPage() {
                 />
 
                 <Column
-                    dataField="ItemsGroupCode"
-                    caption="Group"
+                    caption="Item Group"
+                    calculateCellValue={(row) =>
+                        row.ItemsGroupCode || ""
+                    }
+                />
+
+                <Column
+                    caption="UOM"
+                    calculateCellValue={(row) =>
+                        row.InventoryUOM || ""
+                    }
+                />
+
+                <Column
+                    caption="Warehouse"
+                    calculateCellValue={(row) =>
+                        row.DefaultWarehouse || ""
+                    }
+                />
+
+                <Column
+                    dataField="OnHand"
+                    caption="On Hand"
+                    calculateCellValue={(row) =>
+                        Number(row.OnHand || 0)
+                    }
+                />
+
+                <Column
+                    dataField="Currency"
+                    caption="Currency"
                 />
 
             </DataGrid>

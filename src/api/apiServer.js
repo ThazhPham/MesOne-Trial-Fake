@@ -22,7 +22,6 @@ api.interceptors.request.use(
 
             config.headers.Authorization =
                 `Bearer ${token}`;
-
         }
 
         return config;
@@ -189,75 +188,141 @@ class AuthService {
         );
     }
 
-    // DASHBOARD DATA
-    // - Không truyền tham số: lấy dữ liệu mặc định (filtering rỗng)
-    // - Truyền dateFrom, dateTo: lọc theo khoảng ngày
-    async getDashboardData(dateFrom, dateTo) {
+    // ======================
+    // DASHBOARD
+    // ======================
 
-        const filtering = (dateFrom && dateTo)
-            ? [{
-                columName: "Date",
-                valueDefault: dateFrom,
-                valueSecond: dateTo,
-                dataValue: "dateTime",
-                typeFilter: "between"
-            }]
-            : [];
+    async getDashboardData(
+        dateFrom,
+        dateTo
+    ) {
+
+        const filtering =
+            (dateFrom && dateTo)
+                ? [{
+                    columName: "Date",
+                    valueDefault: dateFrom,
+                    valueSecond: dateTo,
+                    dataValue: "dateTime",
+                    typeFilter: "between"
+                }]
+                : [];
 
         const body = {
+
             signature: 398,
-            functionCode: "GETDATACUSTOMIZE",
+
+            functionCode:
+                "GETDATACUSTOMIZE",
+
             MenuCd: "DB01",
+
             type: 10,
+
             filtering
         };
 
-        // TODO: Cập nhật URL endpoint chính xác nếu cần
         return await this.repository.post(
+
             '/Inventory/DataService/GetData',
+
             body
         );
     }
 
+    // ======================
+    // ITEM MASTER
+    // ======================
+
+    // ======================
+    // ITEM MASTER
+    // ======================
+
+    async getItemMaster(
+        pageIndex = 1,
+        pageSize = 20
+    ) {
+
+        const body = {
+
+            signature: 191,
+
+            functionCode: "GETDATA",
+
+            MenuCd: "B009",
+
+            pageIndex,
+
+            pageSize
+        };
+
+        return await this.repository.post(
+
+            "/Masterdata/DataService/GetData",
+
+            body
+        );
+    }
+
+
+
+    // ======================
+    // BOM MASTER
+    // ======================
+    async getBomMaster(pageIndex = 1, pageSize = 20, itemId) {
+
+        const filtering = [];
+
+        if (itemId) {
+            filtering.push({
+                columName: "ComponentItem",
+                valueDefault: itemId,
+                dataValue: "string",
+                typeFilter: "isEqualto"
+            });
+        }
+
+        const body = {
+            signature: 182,
+            functionCode: "GETDATA",
+            MenuCd: "B011",
+            pageIndex,
+            pageSize,
+            filtering
+        };
+
+        const res = await this.repository.post(
+            "/Masterdata/DataService/GetData",
+            body
+        );
+
+        return res?.data || res;
+    }
+
+    // ======================
     // GET MENU
+    // ======================
+
     async getMenu() {
 
         try {
 
-            // Option 1: Get from API
-            // const response = await api.get('/api/menu');
-            // return response.data;
+            const { default: MENU_DATA } =
+                await import('./menu.js');
 
-            // Option 2: Get from local static data (for development)
-            const { default: MENU_DATA } = await import('./menu.js');
             return MENU_DATA;
 
         } catch (err) {
 
-            console.log('Error loading menu:', err);
+            console.log(
+                'Error loading menu:',
+                err
+            );
 
             return [];
         }
     }
 }
-
-
-// ======================
-// ITEM MASTER
-// ======================
-
-const getItemMaster = async () => {
-
-    const res = await axios.post(
-        "/api/itemmaster/getdata",
-        {
-            PageIndex: 1,
-            PageSize: 100
-        }
-    );
-
-    return res.data;
-};
 
 // ======================
 // EXPORT

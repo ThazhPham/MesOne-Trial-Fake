@@ -1,0 +1,10 @@
+.dx-datagrid-rowsview .dx-row > td {
+    border-bottom: 1px solid #eee !important;
+    vertical-align: middle;
+    padding: 6px 10px;
+}
+
+.dx-datagrid-headers .dx-header-row > td {
+    font-weight: 600;
+    background: #fafafa;
+}

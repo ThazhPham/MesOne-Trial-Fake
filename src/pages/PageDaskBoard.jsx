@@ -4,7 +4,9 @@ import {
     useState
 } from "react";
 
-import ItemMasterPage from "./ItemMaster";
+import { useNavigate } from "react-router-dom";
+import BomMasterPage from "../pages/BomMaster";
+import ItemMasterPage from "../pages/ItemMaster";
 import apiServer from "../api/apiServer";
 
 import Chart, {
@@ -28,6 +30,12 @@ const formatNumber = (value) =>
 // =====================================
 // PARSE DASHBOARD
 // =====================================
+
+const navigate = useNavigate();
+const handleLogout = () => {
+    localStorage.clear();
+    navigate("/PageLogin");
+};
 
 const iconMap = {
     analytics: <MdDashboard />,
@@ -208,6 +216,7 @@ export default function PageDashboard() {
     const [error, setError] =
         useState(null);
 
+    const [showChangePass, setShowChangePass] = useState(false);
     // =====================================
     // TAB
     // =====================================
@@ -446,6 +455,40 @@ export default function PageDashboard() {
         });
     };
 
+    const [user, setUserState] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem("user")) || {};
+        } catch {
+            return {};
+        }
+    });
+
+    //UserLogin
+    const handleLogout = useCallback(() => {
+        localStorage.removeItem("user");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+
+        setUserState({});
+
+        window.location.href = "/PageLogin";
+    }, []);
+
+    const [userOpen, setUserOpen] = useState(false);
+
+    useEffect(() => {
+        const handleClickOutside = () => {
+            setUserOpen(false);
+        };
+
+        if (userOpen) {
+            window.addEventListener("click", handleClickOutside);
+        }
+
+        return () => {
+            window.removeEventListener("click", handleClickOutside);
+        };
+    }, [userOpen]);
     // =====================================
     // RENDER MENU
     // =====================================
@@ -644,6 +687,44 @@ export default function PageDashboard() {
 
                 <div className="app-tabbar">
 
+                    <div className="app-tabbar__right">
+
+                        <div
+                            className="user-box"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setUserOpen(!userOpen);
+                            }}
+                        >
+                            👤 {user.userName || "User"}
+                        </div>
+
+                        {userOpen && (
+                            <div className="user-dropdown">
+
+                                <div className="user-info">
+                                    <div>{user.userName}</div>
+                                    <small>{user.userId}</small>
+                                    <small>{user.deptNm}</small>
+                                </div>
+
+                                <div className="user-item"
+                                    onClick={() => setShowChangePass(true)}
+                                >
+                                    🔒 Change Password
+                                </div>
+
+                                <div className="user-item logout"
+                                    onClick={handleLogout}
+                                >
+                                    🚪 Logout
+                                </div>
+
+                            </div>
+                        )}
+
+                    </div>
+
                     <div className="app-tabbar__tabs">
 
                         {tabs.map((tab) => (
@@ -697,6 +778,7 @@ export default function PageDashboard() {
 
                 {/* CONTENT */}
 
+                {/* CONTENT */}
                 {
                     selectedTab === "DB01" ? (
 
@@ -707,11 +789,7 @@ export default function PageDashboard() {
                                 <input
                                     type="date"
                                     value={temFromDate}
-                                    onChange={(e) =>
-                                        setTemFromDate(
-                                            e.target.value
-                                        )
-                                    }
+                                    onChange={(e) => setTemFromDate(e.target.value)}
                                 />
 
                                 <span>~</span>
@@ -719,11 +797,7 @@ export default function PageDashboard() {
                                 <input
                                     type="date"
                                     value={temToDate}
-                                    onChange={(e) =>
-                                        setTemToDate(
-                                            e.target.value
-                                        )
-                                    }
+                                    onChange={(e) => setTemToDate(e.target.value)}
                                 />
 
                                 <button
@@ -737,82 +811,23 @@ export default function PageDashboard() {
 
                             <div className="app-content">
 
-                                {loading && (
-                                    <div>
-                                        Loading...
-                                    </div>
-                                )}
+                                {loading && <div>Loading...</div>}
 
-                                {error && (
-                                    <div>
-                                        {error}
-                                    </div>
-                                )}
+                                {error && <div>{error}</div>}
 
                                 {!loading && !error && (
-
                                     <>
                                         {/* KPI */}
                                         <div className="dash-kpi-row">
-
-                                            <div className="dash-kpi-card">
-                                                <div>
-                                                    Num Of WO
-                                                </div>
-
-                                                <div>
-                                                    {formatNumber(
-                                                        dashboardData?.NumOfWO
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="dash-kpi-card">
-                                                <div>
-                                                    Plan Qty
-                                                </div>
-
-                                                <div>
-                                                    {formatNumber(
-                                                        dashboardData?.PlanQty
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="dash-kpi-card">
-                                                <div>
-                                                    Actual Qty
-                                                </div>
-
-                                                <div>
-                                                    {formatNumber(
-                                                        dashboardData?.ActualQty
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="dash-kpi-card">
-                                                <div>
-                                                    NG Qty
-                                                </div>
-
-                                                <div>
-                                                    {formatNumber(
-                                                        dashboardData?.DefectQty
-                                                    )}
-                                                </div>
-                                            </div>
-
+                                            <div className="dash-kpi-card">Num Of WO: {formatNumber(dashboardData?.NumOfWO)}</div>
+                                            <div className="dash-kpi-card">Plan Qty: {formatNumber(dashboardData?.PlanQty)}</div>
+                                            <div className="dash-kpi-card">Actual Qty: {formatNumber(dashboardData?.ActualQty)}</div>
+                                            <div className="dash-kpi-card">NG Qty: {formatNumber(dashboardData?.DefectQty)}</div>
                                         </div>
 
                                         {/* CHART */}
                                         <div className="dash-chart-card">
-
-                                            <Chart
-                                                dataSource={chartData}
-                                                palette="Soft Blue"
-                                            >
-
+                                            <Chart dataSource={chartData} palette="Soft Blue">
                                                 <ArgumentAxis argumentType="string" />
 
                                                 <Series
@@ -829,43 +844,30 @@ export default function PageDashboard() {
                                                     type="line"
                                                 />
 
-                                                <Legend
-                                                    verticalAlignment="top"
-                                                    horizontalAlignment="center"
-                                                />
-
+                                                <Legend verticalAlignment="top" horizontalAlignment="center" />
                                                 <Tooltip enabled />
-
                                             </Chart>
-
                                         </div>
-
                                     </>
                                 )}
-
                             </div>
                         </>
 
-                    ) : selectedTab === "ITEM_MASTER" ? (
+                    ) : selectedTab === "B009" ? (
 
                         <ItemMasterPage />
+
+                    ) : selectedTab === "B011" ? (
+
+                        <BomMasterPage />
 
                     ) : (
 
                         <div className="app-content">
-
                             <div className="app-empty-tab">
-
-                                <h2>
-                                    {activeTab.label}
-                                </h2>
-
-                                <p>
-                                    Chưa có nội dung.
-                                </p>
-
+                                <h2>{activeTab?.label}</h2>
+                                <p>Chưa có nội dung.</p>
                             </div>
-
                         </div>
 
                     )
