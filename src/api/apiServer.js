@@ -37,10 +37,61 @@ class UserEntity {
     constructor(data = {}) {
 
         this.userId =
-            data.userId || '';
+            data.userId ||
+            data.uuid ||
+            '';
 
         this.userName =
-            data.userName || '';
+            data.userName ||
+            data.name ||
+            '';
+
+        this.displayName =
+            data.displayName ||
+            data.userName ||
+            data.name ||
+            data.userId ||
+            '';
+
+        this.role =
+            data.role ||
+            data.position ||
+            data.positionName ||
+            '';
+
+        this.deptCd =
+            data.deptCd ||
+            '';
+
+        this.deptNm =
+            data.deptNm ||
+            data.departmentName ||
+            '';
+
+        this.positionName =
+            data.positionName ||
+            data.position ||
+            data.role ||
+            data.deptNm ||
+            data.departmentName ||
+            '';
+
+        this.cardCode =
+            data.cardCode ||
+            '';
+
+        this.cardName =
+            data.cardName ||
+            '';
+
+        this.menus =
+            Array.isArray(data.menus)
+                ? data.menus
+                : [];
+
+        this.permissions =
+            data.permissions ||
+            null;
 
         this.access_token =
             data.access_token || '';
@@ -168,10 +219,66 @@ class AuthService {
 
         if (user) {
 
+            const userProfile = {
+                userId: user.userId,
+                userName: user.userName,
+                displayName: user.displayName,
+                role: user.role,
+                deptCd: user.deptCd,
+                deptNm: user.deptNm,
+                positionName: user.positionName,
+                cardCode: user.cardCode,
+                cardName: user.cardName,
+                menus: user.menus,
+                permissions: user.permissions
+            };
+
             localStorage.setItem(
                 'token',
                 user.access_token
             );
+
+            localStorage.setItem(
+                'user',
+                JSON.stringify(userProfile)
+            );
+
+            localStorage.setItem(
+                'currentUser',
+                JSON.stringify({
+                    uuid: user.userId,
+                    data: {
+                        displayName:
+                            user.displayName
+                    },
+                    role: user.role,
+                    deptCd: user.deptCd,
+                    deptNm: user.deptNm,
+                    cardCode: user.cardCode,
+                    cardName: user.cardName,
+                    accessMenus: user.menus,
+                    permissions: user.permissions
+                })
+            );
+
+            if (user.access_token) {
+                localStorage.setItem(
+                    'jwt_access_token',
+                    user.access_token
+                );
+            }
+
+            if (user.refresh_token) {
+                localStorage.setItem(
+                    'refresh_token',
+                    user.refresh_token
+                );
+
+                localStorage.setItem(
+                    'rtoken',
+                    user.refresh_token
+                );
+            }
         }
 
         return user;

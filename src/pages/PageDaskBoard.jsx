@@ -160,6 +160,64 @@ const buildMenuTree = (
         }));
 };
 
+const readStoredUser = () => {
+    try {
+        const storedUser =
+            JSON.parse(
+                localStorage.getItem("user")
+            );
+
+        if (storedUser) {
+            return storedUser;
+        }
+    } catch {
+        // Ignore invalid stored user data.
+    }
+
+    try {
+        const currentUser =
+            JSON.parse(
+                localStorage.getItem("currentUser")
+            );
+
+        if (currentUser) {
+            return {
+                userId:
+                    currentUser.uuid ||
+                    "",
+                userName:
+                    currentUser.userName ||
+                    currentUser.data?.displayName ||
+                    currentUser.uuid ||
+                    "",
+                displayName:
+                    currentUser.data?.displayName ||
+                    currentUser.displayName ||
+                    "",
+                role:
+                    currentUser.role ||
+                    "",
+                deptCd:
+                    currentUser.deptCd ||
+                    "",
+                deptNm:
+                    currentUser.deptNm ||
+                    "",
+                positionName:
+                    currentUser.positionName ||
+                    currentUser.position ||
+                    currentUser.role ||
+                    currentUser.deptNm ||
+                    ""
+            };
+        }
+    } catch {
+        // Ignore invalid stored user data.
+    }
+
+    return {};
+};
+
 // =====================================
 // COMPONENT
 // =====================================
@@ -460,21 +518,30 @@ export default function PageDashboard() {
         });
     };
 
-    const [user, setUserState] = useState(() => {
-        try {
-            return JSON.parse(localStorage.getItem("user")) || {};
-        } catch {
-            return {};
-        }
-    });
+    const [user, setUserState] = useState(readStoredUser);
 
     const [userOpen, setUserOpen] = useState(false);
+
+    const userDisplayName =
+        user.userName ||
+        user.displayName ||
+        user.userId ||
+        "User";
+
+    const userPositionName =
+        user.positionName ||
+        user.role ||
+        user.deptNm ||
+        "";
 
     const handleLogout = useCallback(() => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
+        localStorage.removeItem("currentUser");
         localStorage.removeItem("access_token");
+        localStorage.removeItem("jwt_access_token");
         localStorage.removeItem("refresh_token");
+        localStorage.removeItem("rtoken");
 
         setUserState({});
         setUserOpen(false);
@@ -750,7 +817,14 @@ export default function PageDashboard() {
                                 setUserOpen(!userOpen);
                             }}
                         >
-                            {user.userName || user.userId || "User"}
+                            <span className="user-box__name">
+                                {userDisplayName}
+                            </span>
+                            {userPositionName && (
+                                <span className="user-box__position">
+                                    {userPositionName}
+                                </span>
+                            )}
                         </div>
 
                         {userOpen && (
