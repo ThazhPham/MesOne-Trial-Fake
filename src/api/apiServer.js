@@ -22,7 +22,6 @@ api.interceptors.request.use(
 
             config.headers.Authorization =
                 `Bearer ${token}`;
-
         }
 
         return config;
@@ -189,66 +188,66 @@ class AuthService {
         );
     }
 
-    // DASHBOARD DATA
-    // - Không truyền tham số: lấy dữ liệu mặc định (filtering rỗng)
-    // - Truyền dateFrom, dateTo: lọc theo khoảng ngày
-    async getDashboardData(dateFrom, dateTo) {
+    // ======================
+    // DASHBOARD
+    // ======================
 
-        const filtering = (dateFrom && dateTo)
-            ? [{
-                columName: "Date",
-                valueDefault: dateFrom,
-                valueSecond: dateTo,
-                dataValue: "dateTime",
-                typeFilter: "between"
-            }]
-            : [];
+    async getDashboardData(
+        dateFrom,
+        dateTo
+    ) {
+
+        const filtering =
+            (dateFrom && dateTo)
+                ? [{
+                    columName: "Date",
+                    valueDefault: dateFrom,
+                    valueSecond: dateTo,
+                    dataValue: "dateTime",
+                    typeFilter: "between"
+                }]
+                : [];
 
         const body = {
+
             signature: 398,
-            functionCode: "GETDATACUSTOMIZE",
+
+            functionCode:
+                "GETDATACUSTOMIZE",
+
             MenuCd: "DB01",
+
             type: 10,
+
             filtering
         };
 
-        // TODO: Cập nhật URL endpoint chính xác nếu cần
         return await this.repository.post(
+
             '/Inventory/DataService/GetData',
+
             body
         );
     }
 
-    // GET MENU
-    async getMenu() {
+    // ======================
+    // ITEM MASTER
+    // ======================
 
-        try {
-
-            // Option 1: Get from API
-            // const response = await api.get('/api/menu');
-            // return response.data;
-
-            // Option 2: Get from local static data (for development)
-            const { default: MENU_DATA } = await import('./menu.js');
-            return MENU_DATA;
-
-        } catch (err) {
-
-            console.log('Error loading menu:', err);
-
-            return [];
-        }
-    }
-
-    async getItemMaster() {
+    async getItemMaster(
+        pageIndex = 1,
+        pageSize = 20
+    ) {
 
         const body = {
             Signature: 191,
             FunctionCode: "GETDATA",
             MenuCd: "B009",
             Type: 10,
-            Skip: 0,
-            Take: 100,
+            Skip:
+                (pageIndex - 1) *
+                pageSize,
+            Take: pageSize,
             Filtering: [],
             Sortings: []
         };
@@ -258,8 +257,69 @@ class AuthService {
             body
         );
     }
-}
 
+
+
+    // ======================
+    // BOM MASTER
+    // ======================
+    async getBomMaster(pageIndex = 1, pageSize = 20, itemId) {
+
+        const filtering = [];
+
+        if (itemId) {
+            filtering.push({
+                columName: "ComponentItem",
+                valueDefault: itemId,
+                dataValue: "string",
+                typeFilter: "isEqualto"
+            });
+        }
+
+        const body = {
+            Signature: 189,
+            FunctionCode: "GETDATA",
+            MenuCd: "B011",
+            Type: 10,
+            Skip:
+                (pageIndex - 1) *
+                pageSize,
+            Take: pageSize,
+            Filtering: filtering,
+            Sortings: []
+        };
+
+        return await this.repository.post(
+            "/Masterdata/DataService/GetData",
+            body
+        );
+    }
+
+    // ======================
+    // GET MENU
+    // ======================
+
+    async getMenu() {
+
+        try {
+
+            const { default: MENU_DATA } =
+                await import('./menu.js');
+
+            return MENU_DATA;
+
+        } catch (err) {
+
+            console.log(
+                'Error loading menu:',
+                err
+            );
+
+            return [];
+        }
+    }
+
+}
 
 // ======================
 // EXPORT
