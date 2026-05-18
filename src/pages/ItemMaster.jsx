@@ -1,6 +1,7 @@
 // pages/ItemMasterPage.jsx
 
 import {
+    useCallback,
     useEffect,
     useState
 } from "react";
@@ -25,13 +26,7 @@ export default function ItemMasterPage() {
     // LOAD DATA
     // =========================
 
-    useEffect(() => {
-
-        loadData();
-
-    }, []);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
 
         try {
 
@@ -47,7 +42,9 @@ export default function ItemMasterPage() {
 
             // DATA API
             setData(
-                res.Data || []
+                Array.isArray(res?.Data)
+                    ? res.Data
+                    : []
             );
 
         } catch (err) {
@@ -58,7 +55,20 @@ export default function ItemMasterPage() {
 
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+
+        const timeoutId =
+            setTimeout(
+                loadData,
+                0
+            );
+
+        return () =>
+            clearTimeout(timeoutId);
+
+    }, [loadData]);
 
     // =========================
     // UI

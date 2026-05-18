@@ -239,25 +239,27 @@ class AuthService {
             return [];
         }
     }
+
+    async getItemMaster() {
+
+        const body = {
+            Signature: 191,
+            FunctionCode: "GETDATA",
+            MenuCd: "B009",
+            Type: 10,
+            Skip: 0,
+            Take: 100,
+            Filtering: [],
+            Sortings: []
+        };
+
+        return await this.repository.post(
+            '/Masterdata/DataService/GetData',
+            body
+        );
+    }
 }
 
-
-// ======================
-// ITEM MASTER
-// ======================
-
-const getItemMaster = async () => {
-
-    const res = await axios.post(
-        "/api/itemmaster/getdata",
-        {
-            PageIndex: 1,
-            PageSize: 100
-        }
-    );
-
-    return res.data;
-};
 
 // ======================
 // EXPORT

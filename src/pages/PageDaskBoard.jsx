@@ -359,7 +359,14 @@ export default function PageDashboard() {
 
     useEffect(() => {
 
-        loadDashboard();
+        const timeoutId =
+            setTimeout(
+                loadDashboard,
+                0
+            );
+
+        return () =>
+            clearTimeout(timeoutId);
 
     }, [loadDashboard]);
 
@@ -846,7 +853,7 @@ export default function PageDashboard() {
                             </div>
                         </>
 
-                    ) : selectedTab === "ITEM_MASTER" ? (
+                    ) : selectedTab === "B009" ? (
 
                         <ItemMasterPage />
 
