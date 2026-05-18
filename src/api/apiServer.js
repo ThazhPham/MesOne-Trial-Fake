@@ -218,7 +218,46 @@ class AuthService {
             body
         );
     }
+
+    // GET MENU
+    async getMenu() {
+
+        try {
+
+            // Option 1: Get from API
+            // const response = await api.get('/api/menu');
+            // return response.data;
+
+            // Option 2: Get from local static data (for development)
+            const { default: MENU_DATA } = await import('./menu.js');
+            return MENU_DATA;
+
+        } catch (err) {
+
+            console.log('Error loading menu:', err);
+
+            return [];
+        }
+    }
 }
+
+
+// ======================
+// ITEM MASTER
+// ======================
+
+const getItemMaster = async () => {
+
+    const res = await axios.post(
+        "/api/itemmaster/getdata",
+        {
+            PageIndex: 1,
+            PageSize: 100
+        }
+    );
+
+    return res.data;
+};
 
 // ======================
 // EXPORT
