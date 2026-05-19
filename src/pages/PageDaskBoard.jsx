@@ -5,6 +5,7 @@ import {
 } from "react";
 
 import { useNavigate } from "react-router-dom";
+import { Popup } from "devextreme-react/popup";
 import BomMasterPage from "../pages/BomMaster";
 import ItemMasterPage from "../pages/ItemMaster";
 import apiServer from "../api/apiServer";
@@ -30,12 +31,6 @@ const formatNumber = (value) =>
 // =====================================
 // PARSE DASHBOARD
 // =====================================
-
-const navigate = useNavigate();
-const handleLogout = () => {
-    localStorage.clear();
-    navigate("/PageLogin");
-};
 
 const iconMap = {
     analytics: <MdDashboard />,
@@ -165,11 +160,71 @@ const buildMenuTree = (
         }));
 };
 
+const readStoredUser = () => {
+    try {
+        const storedUser =
+            JSON.parse(
+                localStorage.getItem("user")
+            );
+
+        if (storedUser) {
+            return storedUser;
+        }
+    } catch {
+        // Ignore invalid stored user data.
+    }
+
+    try {
+        const currentUser =
+            JSON.parse(
+                localStorage.getItem("currentUser")
+            );
+
+        if (currentUser) {
+            return {
+                userId:
+                    currentUser.uuid ||
+                    "",
+                userName:
+                    currentUser.userName ||
+                    currentUser.data?.displayName ||
+                    currentUser.uuid ||
+                    "",
+                displayName:
+                    currentUser.data?.displayName ||
+                    currentUser.displayName ||
+                    "",
+                role:
+                    currentUser.role ||
+                    "",
+                deptCd:
+                    currentUser.deptCd ||
+                    "",
+                deptNm:
+                    currentUser.deptNm ||
+                    "",
+                positionName:
+                    currentUser.positionName ||
+                    currentUser.position ||
+                    currentUser.role ||
+                    currentUser.deptNm ||
+                    ""
+            };
+        }
+    } catch {
+        // Ignore invalid stored user data.
+    }
+
+    return {};
+};
+
 // =====================================
 // COMPONENT
 // =====================================
 
 export default function PageDashboard() {
+
+    const navigate = useNavigate();
 
     // =====================================
     // SIDEBAR
@@ -216,7 +271,8 @@ export default function PageDashboard() {
     const [error, setError] =
         useState(null);
 
-    const [showChangePass, setShowChangePass] = useState(false);
+    const [showChangePass, setShowChangePass] =
+        useState(false);
     // =====================================
     // TAB
     // =====================================
@@ -241,41 +297,38 @@ export default function PageDashboard() {
 
     useEffect(() => {
 
-        const loadMenu =
-            async () => {
+        const storedUser =
+            JSON.parse(
+                localStorage.getItem("user")
+            );
 
-                const menuData =
-                    await apiServer.getMenu();
+        const menuData =
+            storedUser?.menus || [];
 
-                console.log(
-                    "MENU:",
-                    menuData
-                );
+        console.log(
+            "MENU:",
+            menuData
+        );
 
-                const tree =
-                    buildMenuTree(
-                        menuData
-                    );
+        const tree =
+            buildMenuTree(
+                menuData
+            );
 
-                console.log(
-                    "TREE:",
-                    tree
-                );
+        console.log(
+            "TREE:",
+            tree
+        );
 
-                setMenuGroups(tree);
+        setMenuGroups(tree);
 
-                // AUTO OPEN ROOT
-                const openObj = {};
+        const openObj = {};
 
-                tree.forEach((x) => {
+        tree.forEach((x) => {
+            openObj[x.id] = true;
+        });
 
-                    openObj[x.id] = true;
-                });
-
-                setOpenMenus(openObj);
-            };
-
-        loadMenu();
+        setOpenMenus(openObj);
 
     }, []);
 
@@ -368,7 +421,14 @@ export default function PageDashboard() {
 
     useEffect(() => {
 
-        loadDashboard();
+        const timeoutId =
+            setTimeout(
+                loadDashboard,
+                0
+            );
+
+        return () =>
+            clearTimeout(timeoutId);
 
     }, [loadDashboard]);
 
@@ -455,26 +515,46 @@ export default function PageDashboard() {
         });
     };
 
-    const [user, setUserState] = useState(() => {
-        try {
-            return JSON.parse(localStorage.getItem("user")) || {};
-        } catch {
-            return {};
-        }
-    });
+    // =====================================
+    // ACTIVE TAB
+    // =====================================
 
-    //UserLogin
-    const handleLogout = useCallback(() => {
-        localStorage.removeItem("user");
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
+    const activeTab =
+        tabs.find(
+            (x) =>
+                x.id ===
+                selectedTab
+        ) || DEFAULT_TAB;
 
-        setUserState({});
-
-        window.location.href = "/PageLogin";
-    }, []);
+    const [user, setUserState] = useState(readStoredUser);
 
     const [userOpen, setUserOpen] = useState(false);
+
+    const userDisplayName =
+        user.userName ||
+        user.displayName ||
+        user.userId ||
+        "User";
+
+    const userPositionName =
+        user.positionName ||
+        user.role ||
+        user.deptNm ||
+        "";
+
+    const handleLogout = useCallback(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("currentUser");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("jwt_access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("rtoken");
+
+        setUserState({});
+        setUserOpen(false);
+        navigate("/", { replace: true });
+    }, [navigate]);
 
     useEffect(() => {
         const handleClickOutside = () => {
@@ -597,16 +677,7 @@ export default function PageDashboard() {
         });
     };
 
-    // =====================================
-    // ACTIVE TAB
-    // =====================================
 
-    const activeTab =
-        tabs.find(
-            (x) =>
-                x.id ===
-                selectedTab
-        ) || DEFAULT_TAB;
 
     // =====================================
     // UI
@@ -687,44 +758,6 @@ export default function PageDashboard() {
 
                 <div className="app-tabbar">
 
-                    <div className="app-tabbar__right">
-
-                        <div
-                            className="user-box"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setUserOpen(!userOpen);
-                            }}
-                        >
-                            👤 {user.userName || "User"}
-                        </div>
-
-                        {userOpen && (
-                            <div className="user-dropdown">
-
-                                <div className="user-info">
-                                    <div>{user.userName}</div>
-                                    <small>{user.userId}</small>
-                                    <small>{user.deptNm}</small>
-                                </div>
-
-                                <div className="user-item"
-                                    onClick={() => setShowChangePass(true)}
-                                >
-                                    🔒 Change Password
-                                </div>
-
-                                <div className="user-item logout"
-                                    onClick={handleLogout}
-                                >
-                                    🚪 Logout
-                                </div>
-
-                            </div>
-                        )}
-
-                    </div>
-
                     <div className="app-tabbar__tabs">
 
                         {tabs.map((tab) => (
@@ -752,7 +785,7 @@ export default function PageDashboard() {
                                 </span>
 
                                 {tab.id !==
-                                    "dashboard" && (
+                                    "DB01" && (
 
                                         <span
                                             className="app-tabbar__close"
@@ -771,6 +804,53 @@ export default function PageDashboard() {
                             </div>
 
                         ))}
+
+                    </div>
+
+                    <div className="app-tabbar__right">
+
+                        <div
+                            className="user-box"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setUserOpen(!userOpen);
+                            }}
+                        >
+                            <span className="user-box__name">
+                                {userDisplayName}
+                            </span>
+                            {userPositionName && (
+                                <span className="user-box__position">
+                                    {userPositionName}
+                                </span>
+                            )}
+                        </div>
+
+                        {userOpen && (
+                            <div
+                                className="user-dropdown"
+                                onClick={(e) =>
+                                    e.stopPropagation()
+                                }
+                            >
+
+                                <div className="user-item"
+                                    onClick={() => {
+                                        setUserOpen(false);
+                                        setShowChangePass(true);
+                                    }}
+                                >
+                                    Đổi mật khẩu
+                                </div>
+
+                                <div className="user-item logout"
+                                    onClick={handleLogout}
+                                >
+                                    Logout
+                                </div>
+
+                            </div>
+                        )}
 
                     </div>
 
@@ -874,6 +954,53 @@ export default function PageDashboard() {
                 }
 
             </div>
+
+            <Popup
+                visible={showChangePass}
+                onHiding={() =>
+                    setShowChangePass(false)
+                }
+                dragEnabled={false}
+                hideOnOutsideClick={true}
+                showCloseButton={true}
+                showTitle={true}
+                title="Đổi mật khẩu"
+                width={420}
+                height="auto"
+            >
+                <div className="change-pass-popup">
+                    <input
+                        type="password"
+                        placeholder="Mật khẩu hiện tại"
+                    />
+                    <input
+                        type="password"
+                        placeholder="Mật khẩu mới"
+                    />
+                    <input
+                        type="password"
+                        placeholder="Nhập lại mật khẩu mới"
+                    />
+                    <div className="change-pass-actions">
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setShowChangePass(false)
+                            }
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setShowChangePass(false)
+                            }
+                        >
+                            Lưu
+                        </button>
+                    </div>
+                </div>
+            </Popup>
 
         </div>
     );
