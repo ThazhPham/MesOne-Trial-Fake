@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import apiServer from "../api/apiServer";
+
 import Chart, {
     Series,
     ArgumentAxis,
     Legend,
     Tooltip
 } from "devextreme-react/chart";
+
+import { MdFolder, MdDashboard, MdSettings, MdStore } from "react-icons/md";
+
 import "../css/PageDaskBoard.css";
 
 const formatNumber = (value) =>
@@ -62,15 +66,24 @@ const getDateRangeError = (
 
 export default function PageDashboard() {
 
-    // =========================
+    const navigate = useNavigate();
+
+    // =====================================
     // SIDEBAR
-    // =========================
+    // =====================================
 
-    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isCollapsed, setIsCollapsed] =
+        useState(false);
 
-    // =========================
+    const [openMenus, setOpenMenus] =
+        useState({});
+
+    const [menuGroups, setMenuGroups] =
+        useState([]);
+
+    // =====================================
     // DATE FILTER
-    // =========================
+    // =====================================
 
     const [fromDate, setFromDate] =
         useState("2026-05-01");
@@ -78,9 +91,15 @@ export default function PageDashboard() {
     const [toDate, setToDate] =
         useState("2026-05-15");
 
-    // =========================
-    // DATA
-    // =========================
+    const [temFromDate, setTemFromDate] =
+        useState("2026-05-01");
+
+    const [temToDate, setTemToDate] =
+        useState("2026-05-15");
+
+    // =====================================
+    // DASHBOARD
+    // =====================================
 
     const [dashboardData, setDashboardData] =
         useState(null);
@@ -94,13 +113,29 @@ export default function PageDashboard() {
     const [error, setError] =
         useState(null);
 
-    // =========================
-    // LOAD DASHBOARD API
-    // =========================
+    const [showChangePass, setShowChangePass] =
+        useState(false);
+    // =====================================
+    // TAB
+    // =====================================
 
-    // =========================
-    // LOAD DASHBOARD API
-    // =========================
+    const DEFAULT_TAB = {
+        id: "DB01",
+        label: "Dashboard",
+        icon: <MdDashboard />
+    };
+
+    const [tabs, setTabs] =
+        useState([
+            DEFAULT_TAB
+        ]);
+
+    const [selectedTab, setSelectedTab] =
+        useState("DB01");
+
+    // =====================================
+    // LOAD MENU
+    // =====================================
 
     const loadDashboard = useCallback(async () => {
 
@@ -115,26 +150,31 @@ export default function PageDashboard() {
             return;
         }
 
-        try {
+        setOpenMenus((prev) => ({
+            ...prev,
+            [menuId]:
+                !prev[menuId]
+        }));
+    };
 
-            setLoading(true);
+    // =====================================
+    // LOAD DASHBOARD
+    // =====================================
 
-            setError(null);
+    const loadDashboard =
+        useCallback(async () => {
 
-            const data =
-                await apiServer.getDashboardData(
+            const dateRangeError =
+                getDateRangeError(
                     fromDate,
                     toDate
                 );
 
-            console.log(
-                "DASHBOARD:",
-                data
-            );
+            if (dateRangeError) {
 
-            // =========================
-            // PARSE CHART DATA
-            // =========================
+                setError(
+                    dateRangeError
+                );
 
             const summaryData =
                 parseDashboardSection(
@@ -148,31 +188,16 @@ export default function PageDashboard() {
                     "CH00TT0004"
                 );
 
-            console.log(
-                "CHART DATA:",
-                chartData
-            );
+            try {
+
+                setLoading(true);
+
+                setError(null);
 
             setDashboardData(summaryData);
             setChartData(chartData);
 
-        } catch (err) {
-
-            console.log(err);
-
-            setError(
-                "Cannot load dashboard data"
-            );
-
-        } finally {
-
-            setLoading(false);
-        }
-    }, [fromDate, toDate]);
-
-    // =========================
-    // AUTO LOAD
-    // =========================
+        }, [fromDate, toDate]);
 
     useEffect(() => {
 
@@ -187,38 +212,225 @@ export default function PageDashboard() {
 
     }, [loadDashboard]);
 
-    // =========================
-    // SEARCH BUTTON
-    // =========================
+    // =====================================
+    // SEARCH
+    // =====================================
 
     const handleSearch = () => {
 
-        loadDashboard();
+        setFromDate(
+            temFromDate
+        );
+
+        setToDate(
+            temToDate
+        );
     };
+
+    // =====================================
+    // TAB
+    // =====================================
+
+    const handleAddTab = (
+        id,
+        label,
+        icon
+    ) => {
+
+        const tabId =
+            id === "dashboard"
+                ? "DB01"
+                : id;
+
+        const exists =
+            tabs.find(
+                (x) =>
+                    x.id === tabId
+            );
+
+        if (!exists) {
+
+            setTabs((prev) => [
+                ...prev,
+                {
+                    id: tabId,
+                    label,
+                    icon
+                }
+            ]);
+        }
+    }, [fromDate, toDate]);
+
+    const handleCloseTab = (
+        e,
+        tabId
+    ) => {
+
+        e.stopPropagation();
+
+        setTabs((prevTabs) => {
+
+            const newTabs =
+                prevTabs.filter(
+                    (x) =>
+                        x.id !== tabId
+                );
+
+            if (
+                selectedTab ===
+                tabId
+            ) {
+
+                setSelectedTab(
+                    newTabs[
+                        newTabs.length - 1
+                    ]?.id ||
+                    ""
+                );
+            }
+
+            return newTabs;
+        });
+    };
+
+    // =====================================
+    // ACTIVE TAB
+    // =====================================
+
+    const activeTab =
+        tabs.find(
+            (x) =>
+                x.id ===
+                selectedTab
+        ) || DEFAULT_TAB;
+
+    const [user, setUserState] = useState(readStoredUser);
+
+    const [userOpen, setUserOpen] = useState(false);
+
+    const userDisplayName =
+        user.userName ||
+        user.displayName ||
+        user.userId ||
+        "User";
+
+    const userPositionName =
+        user.positionName ||
+        user.role ||
+        user.deptNm ||
+        "";
+
+    const handleLogout = useCallback(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        localStorage.removeItem("currentUser");
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("jwt_access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("rtoken");
+
+        setUserState({});
+        setUserOpen(false);
+        navigate("/", { replace: true });
+    }, [navigate]);
+
+    useEffect(() => {
+        const handleClickOutside = () => {
+            setUserOpen(false);
+        };
+
+        const timeoutId =
+            setTimeout(
+                loadDashboard,
+                0
+            );
+
+        return () =>
+            clearTimeout(timeoutId);
+
+    }, [loadDashboard]);
+
+                        <span className="menu-icon">
+                            {iconMap[menu.icon] || <MdFolder />}
+                        </span>
+
+
+
+                        {!isCollapsed && (
+                            <>
+                                <span
+                                    className="app-sidebar__text"
+                                >
+                                    {
+                                        menu.label
+                                    }
+                                </span>
+
+                                {hasChildren && (
+                                    <span
+                                        style={{
+                                            marginLeft:
+                                                "auto"
+                                        }}
+                                    >
+                                        {isOpen
+                                            ? "▾"
+                                            : "▸"}
+                                    </span>
+                                )}
+                            </>
+                        )}
+
+                    </button>
+
+                    {!isCollapsed &&
+                        hasChildren &&
+                        isOpen && (
+
+                            <div>
+
+                                {renderMenu(
+                                    menu.children,
+                                    level + 1
+                                )}
+
+                            </div>
+                        )}
+
+                </div>
+            );
+        });
+    };
+
+
+
+    // =====================================
+    // UI
+    // =====================================
 
     return (
 
         <div className="app-layout">
 
-            {/* ========================= */}
             {/* SIDEBAR */}
-            {/* ========================= */}
 
             <div
-                className={
-                    `app-sidebar ${isCollapsed
-                        ? "collapsed"
-                        : ""
-                    }`
-                }
+                className={`app-sidebar ${isCollapsed
+                    ? "collapsed"
+                    : ""
+                    }`}
             >
+
+                {/* LOGO */}
 
                 <div className="app-sidebar__logo">
 
                     {!isCollapsed && (
+
                         <div className="app-sidebar__brand">
-                            HANS
+                            MES
                         </div>
+
                     )}
 
                     <div
@@ -234,51 +446,17 @@ export default function PageDashboard() {
 
                 </div>
 
+                {/* MENU */}
+
                 <div className="app-sidebar__menu">
 
-                    <div className="app-sidebar__item active">
-
-                        <div className="app-sidebar__icon">
-                            🏠
-                        </div>
-
-                        {!isCollapsed && (
-                            <div className="app-sidebar__text">
-                                Dashboard
-                            </div>
-                        )}
-
-                    </div>
-
-                    <div className="app-sidebar__item">
-
-                        <div className="app-sidebar__icon">
-                            📦
-                        </div>
-
-                        {!isCollapsed && (
-                            <div className="app-sidebar__text">
-                                Item
-                            </div>
-                        )}
-
-                    </div>
-
-                    <div className="app-sidebar__item">
-
-                        <div className="app-sidebar__icon">
-                            👤
-                        </div>
-
-                        {!isCollapsed && (
-                            <div className="app-sidebar__text">
-                                Employee
-                            </div>
-                        )}
-
-                    </div>
+                    {renderMenu(
+                        menuGroups
+                    )}
 
                 </div>
+
+                {/* FOOTER */}
 
                 <div className="app-sidebar__footer">
 
@@ -289,9 +467,7 @@ export default function PageDashboard() {
 
             </div>
 
-            {/* ========================= */}
             {/* MAIN */}
-            {/* ========================= */}
 
             <div
                 className="app-main"
@@ -303,61 +479,54 @@ export default function PageDashboard() {
                 }}
             >
 
-                {/* ========================= */}
                 {/* TABBAR */}
-                {/* ========================= */}
 
                 <div className="app-tabbar">
 
-                    <div className="app-tabbar__tab app-tabbar__tab--active">
-                        Dashboard
-                    </div>
+                    <div className="app-tabbar__tabs">
 
-                    {/* DATE FILTER */}
+                        {tabs.map((tab) => (
 
-                    <div className="dash-date-filter">
-
-                        {/* FROM */}
-
-                        <div>
-
-                            <div className="dash-date-label">
-                                Req Date (from)
-                            </div>
-
-                            <input
-                                type="date"
-                                value={fromDate}
-                                onChange={(e) =>
-                                    setFromDate(
-                                        e.target.value
+                            <div
+                                key={tab.id}
+                                className={`app-tabbar__tab ${selectedTab ===
+                                    tab.id
+                                    ? "app-tabbar__tab--active"
+                                    : ""
+                                    }`}
+                                onClick={() =>
+                                    setSelectedTab(
+                                        tab.id
                                     )
                                 }
-                            />
+                            >
 
-                        </div>
+                                <span>
+                                    {tab.icon}
+                                </span>
 
-                        <span>~</span>
+                                <span>
+                                    {tab.label}
+                                </span>
 
-                        {/* TO */}
+                                {tab.id !==
+                                    "DB01" && (
 
-                        <div>
+                                        <span
+                                            className="app-tabbar__close"
+                                            onClick={(e) =>
+                                                handleCloseTab(
+                                                    e,
+                                                    tab.id
+                                                )
+                                            }
+                                        >
+                                            ✕
+                                        </span>
 
-                            <div className="dash-date-label">
-                                Req Date (to)
+                                    )}
+
                             </div>
-
-                            <input
-                                type="date"
-                                value={toDate}
-                                onChange={(e) =>
-                                    setToDate(
-                                        e.target.value
-                                    )
-                                }
-                            />
-
-                        </div>
 
                         {/* SEARCH */}
 
@@ -371,45 +540,24 @@ export default function PageDashboard() {
 
                     </div>
 
-                </div>
+                    <div className="app-tabbar__right">
 
-                {/* ========================= */}
-                {/* CONTENT */}
-                {/* ========================= */}
-
-                <div className="app-content">
-
-                    {loading && (
-
-                        <div className="dash-loading">
-
-                            <div className="dash-spinner"></div>
-
-                            <div>
-                                Loading dashboard...
-                            </div>
-
+                        <div
+                            className="user-box"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setUserOpen(!userOpen);
+                            }}
+                        >
+                            <span className="user-box__name">
+                                {userDisplayName}
+                            </span>
+                            {userPositionName && (
+                                <span className="user-box__position">
+                                    {userPositionName}
+                                </span>
+                            )}
                         </div>
-                    )}
-
-                    {error && (
-
-                        <div className="dash-error">
-                            {error}
-                        </div>
-                    )}
-
-                    {!loading && !error && (
-
-                        <>
-                            {/* KPI */}
-
-                            <div className="dash-kpi-row">
-
-                                <div className="dash-kpi-card">
-                                    <div className="dash-kpi-title">
-                                        Num Of WO
-                                    </div>
 
                                     <div className="dash-kpi-value">
                                         {formatNumber(
@@ -455,58 +603,139 @@ export default function PageDashboard() {
                                 </div>
 
                             </div>
+                        )}
 
-                            {/* CHART */}
+                    </div>
 
-                            <div className="dash-chart-card">
+                </div>
 
-                                <h3 className="dash-chart-title">
-                                    Production & Delivery
-                                </h3>
+                {/* CONTENT */}
+
+                {/* CONTENT */}
+                {
+                    selectedTab === "DB01" ? (
 
                                 <Chart
                                     dataSource={chartData}
                                     palette="Soft Blue"
                                 >
-
-                                    {/* X AXIS */}
-                                    <ArgumentAxis
-                                        argumentType="string"
-                                    />
-
-                                    {/* BAR */}
-                                    <Series
-                                        valueField="ProdQty"
-                                        argumentField="Key"
-                                        name="Production Qty"
-                                        type="bar"
-                                    />
-
-                                    {/* LINE */}
-                                    <Series
-                                        valueField="DeliveryQty"
-                                        argumentField="Key"
-                                        name="Delivery Qty"
-                                        type="line"
-                                    />
-
-                                    <Legend
-                                        verticalAlignment="top"
-                                        horizontalAlignment="center"
-                                    />
-
-                                    <Tooltip enabled={true} />
-
-                                </Chart>
+                                    Search
+                                </button>
 
                             </div>
 
-                        </>
-                    )}
+                            <div className="app-content">
 
-                </div>
+                                {loading && <div>Loading...</div>}
+
+                                {error && <div>{error}</div>}
+
+                                {!loading && !error && (
+                                    <>
+                                        {/* KPI */}
+                                        <div className="dash-kpi-row">
+                                            <div className="dash-kpi-card">Num Of WO: {formatNumber(dashboardData?.NumOfWO)}</div>
+                                            <div className="dash-kpi-card">Plan Qty: {formatNumber(dashboardData?.PlanQty)}</div>
+                                            <div className="dash-kpi-card">Actual Qty: {formatNumber(dashboardData?.ActualQty)}</div>
+                                            <div className="dash-kpi-card">NG Qty: {formatNumber(dashboardData?.DefectQty)}</div>
+                                        </div>
+
+                                        {/* CHART */}
+                                        <div className="dash-chart-card">
+                                            <Chart dataSource={chartData} palette="Soft Blue">
+                                                <ArgumentAxis argumentType="string" />
+
+                                                <Series
+                                                    valueField="ProdQty"
+                                                    argumentField="Key"
+                                                    name="Production Qty"
+                                                    type="bar"
+                                                />
+
+                                                <Series
+                                                    valueField="DeliveryQty"
+                                                    argumentField="Key"
+                                                    name="Delivery Qty"
+                                                    type="line"
+                                                />
+
+                                                <Legend verticalAlignment="top" horizontalAlignment="center" />
+                                                <Tooltip enabled />
+                                            </Chart>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </>
+
+                    ) : selectedTab === "B009" ? (
+
+                        <ItemMasterPage />
+
+                    ) : selectedTab === "B011" ? (
+
+                        <BomMasterPage />
+
+                    ) : (
+
+                        <div className="app-content">
+                            <div className="app-empty-tab">
+                                <h2>{activeTab?.label}</h2>
+                                <p>Chưa có nội dung.</p>
+                            </div>
+                        </div>
+
+                    )
+                }
 
             </div>
+
+            <Popup
+                visible={showChangePass}
+                onHiding={() =>
+                    setShowChangePass(false)
+                }
+                dragEnabled={false}
+                hideOnOutsideClick={true}
+                showCloseButton={true}
+                showTitle={true}
+                title="Đổi mật khẩu"
+                width={420}
+                height="auto"
+            >
+                <div className="change-pass-popup">
+                    <input
+                        type="password"
+                        placeholder="Mật khẩu hiện tại"
+                    />
+                    <input
+                        type="password"
+                        placeholder="Mật khẩu mới"
+                    />
+                    <input
+                        type="password"
+                        placeholder="Nhập lại mật khẩu mới"
+                    />
+                    <div className="change-pass-actions">
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setShowChangePass(false)
+                            }
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setShowChangePass(false)
+                            }
+                        >
+                            Lưu
+                        </button>
+                    </div>
+                </div>
+            </Popup>
 
         </div>
     );

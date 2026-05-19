@@ -22,7 +22,6 @@ api.interceptors.request.use(
 
             config.headers.Authorization =
                 `Bearer ${token}`;
-
         }
 
         return config;
@@ -38,10 +37,61 @@ class UserEntity {
     constructor(data = {}) {
 
         this.userId =
-            data.userId || '';
+            data.userId ||
+            data.uuid ||
+            '';
 
         this.userName =
-            data.userName || '';
+            data.userName ||
+            data.name ||
+            '';
+
+        this.displayName =
+            data.displayName ||
+            data.userName ||
+            data.name ||
+            data.userId ||
+            '';
+
+        this.role =
+            data.role ||
+            data.position ||
+            data.positionName ||
+            '';
+
+        this.deptCd =
+            data.deptCd ||
+            '';
+
+        this.deptNm =
+            data.deptNm ||
+            data.departmentName ||
+            '';
+
+        this.positionName =
+            data.positionName ||
+            data.position ||
+            data.role ||
+            data.deptNm ||
+            data.departmentName ||
+            '';
+
+        this.cardCode =
+            data.cardCode ||
+            '';
+
+        this.cardName =
+            data.cardName ||
+            '';
+
+        this.menus =
+            Array.isArray(data.menus)
+                ? data.menus
+                : [];
+
+        this.permissions =
+            data.permissions ||
+            null;
 
         this.access_token =
             data.access_token || '';
@@ -57,10 +107,7 @@ class UserEntity {
 
 class AuthRepository {
 
-    async login(
-        username,
-        password
-    ) {
+    async login(username, password) {
 
         try {
 
@@ -94,11 +141,8 @@ class AuthRepository {
 
             const response =
                 await api.post(
-
                     '/connect/token',
-
                     formData,
-
                     {
                         headers: {
                             'Content-Type':
@@ -114,16 +158,11 @@ class AuthRepository {
         } catch (err) {
 
             console.log(err);
-
             return null;
         }
     }
 
-    // API CHUNG
-    async post(
-        url,
-        body
-    ) {
+    async post(url, body) {
 
         try {
 
@@ -143,7 +182,6 @@ class AuthRepository {
         }
     }
 }
-
 // ======================
 // SERVICE
 // ======================
@@ -156,10 +194,7 @@ class AuthService {
             new AuthRepository();
     }
 
-    async login(
-        username,
-        password
-    ) {
+    async login(username, password) {
 
         const user =
             await this.repository.login(
@@ -170,51 +205,102 @@ class AuthService {
         if (user) {
 
             localStorage.setItem(
-                'token',
+                "token",
                 user.access_token
+            );
+
+            localStorage.setItem(
+                "user",
+                JSON.stringify(user)
             );
         }
 
         return user;
     }
 
-    async postAPI(
-        url,
-        body
+    // ======================
+    // DASHBOARD
+    // ======================
+
+    async getDashboardData(
+        dateFrom,
+        dateTo
     ) {
 
+        const body = {
+
+            signature: 398,
+
+            functionCode:
+                "GETDATACUSTOMIZE",
+
+            MenuCd: "DB01",
+
+            type: 10,
+
+            filtering: [
+                {
+                    columName: "Date",
+
+                    valueDefault:
+                        `${dateFrom} 00:00:00`,
+
+                    valueSecond:
+                        `${dateTo} 23:59:59`,
+
+                    dataValue:
+                        "dateTime",
+
+                    typeFilter:
+                        "between"
+                }
+            ]
+        };
+        console.log(
+            "DASHBOARD BODY:",
+            body
+        );
+
         return await this.repository.post(
-            url,
+            "/Inventory/DataService/GetData",
             body
         );
     }
 
-    // DASHBOARD DATA
-    // - Không truyền tham số: lấy dữ liệu mặc định (filtering rỗng)
-    // - Truyền dateFrom, dateTo: lọc theo khoảng ngày
-    async getDashboardData(dateFrom, dateTo) {
-
-        const filtering = (dateFrom && dateTo)
-            ? [{
-                columName: "Date",
-                valueDefault: dateFrom,
-                valueSecond: dateTo,
-                dataValue: "dateTime",
-                typeFilter: "between"
-            }]
-            : [];
+    async getItemMaster(
+        pageIndex = 1,
+        pageSize = 20
+    ) {
 
         const body = {
-            signature: 398,
-            functionCode: "GETDATACUSTOMIZE",
-            MenuCd: "DB01",
-            type: 10,
-            filtering
+            signature: 191,
+            functionCode: "GETDATA",
+            MenuCd: "B009",
+            pageIndex,
+            pageSize
         };
 
-        // TODO: Cập nhật URL endpoint chính xác nếu cần
         return await this.repository.post(
-            '/Inventory/DataService/GetData',
+            "/Masterdata/DataService/GetData",
+            body
+        );
+    }
+
+    async getBomMaster(
+        pageIndex = 1,
+        pageSize = 20
+    ) {
+
+        const body = {
+            signature: 182,
+            functionCode: "GETDATA",
+            MenuCd: "B011",
+            pageIndex,
+            pageSize
+        };
+
+        return await this.repository.post(
+            "/Masterdata/DataService/GetData",
             body
         );
     }

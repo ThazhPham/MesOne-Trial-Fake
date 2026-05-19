@@ -25,10 +25,10 @@ export default function PageLogin() {
 
     const navigate = useNavigate();
     const [username, setUsername] =
-        useState('');
+        useState('1admin');
 
     const [password, setPassword] =
-        useState('');
+        useState('Hoanghuyday1!');
 
     // =====================
     // LANGUAGE STATE
