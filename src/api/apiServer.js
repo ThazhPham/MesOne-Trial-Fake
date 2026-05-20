@@ -1,8 +1,10 @@
 import axios from 'axios';
+import MENU_DATA from './menu';
 
 // ======================
 // API CLIENT
 // ======================
+
 
 const api = axios.create({
 
@@ -163,24 +165,49 @@ class AuthRepository {
     }
 
     async post(url, body) {
+    try {
+        const response = await api.post(url, body);
 
-        try {
+        const data = response.data;
 
-            const response =
-                await api.post(
-                    url,
-                    body
-                );
+        return {
 
-            return response.data;
+    raw: data,
 
-        } catch (err) {
+    // FIX ARRAY
+    list: (() => {
 
-            console.log(err);
+    const d = data?.Data;
 
-            return null;
-        }
+    // case 1: Data là array
+    if (Array.isArray(d)) return d;
+
+    // case 2: Data.List
+    if (Array.isArray(data?.Data?.List)) return data.Data.List;
+
+    // case 3: raw.Data (case của bạn đang gặp)
+    if (Array.isArray(data?.raw?.Data)) return data.raw.Data;
+
+    // case 4: fallback
+    if (Array.isArray(data?.List)) return data.List;
+
+    return [];
+
+})(),
+
+    total:
+        data?.TotalRows ||
+        data?.TotalRecords ||
+        data?.Total ||
+        data?.total ||
+        0
+};
+
+    } catch (err) {
+        console.log(err);
+        return null;
     }
+}
 }
 // ======================
 // SERVICE
@@ -294,7 +321,7 @@ class AuthService {
         );
     }
 
-    async getBomMaster(
+async getBomMaster(
     pageIndex = 1,
     pageSize = 20,
     filtering = []
@@ -304,28 +331,80 @@ class AuthService {
 
         signature: 182,
 
-        functionCode: "GETDATABYGRID",
+        functionCode:
+            "GETDATABYGRID",
 
-        isInit: true,
+        isInit: false,
 
         gridID: null,
 
         skip:
-            (pageIndex - 1) * pageSize,
+            (pageIndex - 1)
+            * pageSize,
 
         take:
             pageSize,
 
-        MenuCd: "B011",
+        MenuCd:
+            "B011",
 
-        filtering
+        filtering:
+            filtering
     };
+
+    console.log(
+        "GET BOM BODY:",
+        body
+    );
 
     return await this.repository.post(
         "/Masterdata/DataService/GetData",
         body
     );
 }
+
+    async createBom(data) {
+        const body = {
+            signature: 182,
+            functionCode: "SAVE",
+            MenuCd: "B011",
+            Data: data
+        };
+        return await this.repository.post(
+            "/Masterdata/DataService/SaveData",
+            body
+        );
+    }
+
+    async updateBom(data) {
+        const body = {
+            signature: 182,
+            functionCode: "UPDATE",
+            MenuCd: "B011",
+            Data: data
+        };
+        return await this.repository.post(
+            "/Masterdata/DataService/SaveData",
+            body
+        );
+    }
+
+    async deleteBom(id) {
+        const body = {
+            signature: 182,
+            functionCode: "DELETE",
+            MenuCd: "B011",
+            Data: { id }
+        };
+        return await this.repository.post(
+            "/Masterdata/DataService/DeleteData",
+            body
+        );
+    }
+
+    async getMenu() {
+        return MENU_DATA;
+    }
 }
 
 

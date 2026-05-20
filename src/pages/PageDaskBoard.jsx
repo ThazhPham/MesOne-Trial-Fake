@@ -859,99 +859,97 @@ export default function PageDashboard() {
                 {/* CONTENT */}
 
                 {/* CONTENT */}
-                {
-                    selectedTab === "DB01" ? (
+                {/* DB01 */}
+                <div style={{ display: selectedTab === "DB01" ? "block" : "none" }}>
+                <div className="dash-date-filter">
+                    <input
+                        type="date"
+                        value={temFromDate}
+                        onChange={(e) => setTemFromDate(e.target.value)}
+                    />
 
-                        <>
-                            {/* DASHBOARD */}
-                            <div className="dash-date-filter">
+                    <span>~</span>
 
-                                <input
-                                    type="date"
-                                    value={temFromDate}
-                                    onChange={(e) => setTemFromDate(e.target.value)}
-                                />
+                    <input
+                        type="date"
+                        value={temToDate}
+                        onChange={(e) => setTemToDate(e.target.value)}
+                    />
 
-                                <span>~</span>
+                    <button onClick={handleSearch}>
+                        Search
+                    </button>
+                </div>
 
-                                <input
-                                    type="date"
-                                    value={temToDate}
-                                    onChange={(e) => setTemToDate(e.target.value)}
-                                />
+    <div className="app-content">
+        {loading && <div>Loading...</div>}
+        {error && <div>{error}</div>}
 
-                                <button
-                                    className="dash-refresh-btn"
-                                    onClick={handleSearch}
-                                >
-                                    Search
-                                </button>
+        {!loading && !error && (
+            <>
+                <div className="dash-kpi-row">
+                    <div className="dash-kpi-card">
+                        Num Of WO: {formatNumber(dashboardData?.NumOfWO)}
+                    </div>
+                    <div className="dash-kpi-card">
+                        Plan Qty: {formatNumber(dashboardData?.PlanQty)}
+                    </div>
+                    <div className="dash-kpi-card">
+                        Actual Qty: {formatNumber(dashboardData?.ActualQty)}
+                    </div>
+                    <div className="dash-kpi-card">
+                        NG Qty: {formatNumber(dashboardData?.DefectQty)}
+                    </div>
+                </div>
 
-                            </div>
+                <div className="dash-chart-card">
+                    <Chart dataSource={chartData} palette="Soft Blue">
+                        <ArgumentAxis argumentType="string" />
 
-                            <div className="app-content">
+                        <Series
+                            valueField="ProdQty"
+                            argumentField="Key"
+                            name="Production Qty"
+                            type="bar"
+                        />
 
-                                {loading && <div>Loading...</div>}
+                        <Series
+                            valueField="DeliveryQty"
+                            argumentField="Key"
+                            name="Delivery Qty"
+                            type="line"
+                        />
 
-                                {error && <div>{error}</div>}
+                        <Legend />
+                        <Tooltip />
+                    </Chart>
+                </div>
+            </>
+        )}
+    </div>
+</div>
 
-                                {!loading && !error && (
-                                    <>
-                                        {/* KPI */}
-                                        <div className="dash-kpi-row">
-                                            <div className="dash-kpi-card">Num Of WO: {formatNumber(dashboardData?.NumOfWO)}</div>
-                                            <div className="dash-kpi-card">Plan Qty: {formatNumber(dashboardData?.PlanQty)}</div>
-                                            <div className="dash-kpi-card">Actual Qty: {formatNumber(dashboardData?.ActualQty)}</div>
-                                            <div className="dash-kpi-card">NG Qty: {formatNumber(dashboardData?.DefectQty)}</div>
-                                        </div>
+{/* ITEM MASTER */}
+<div style={{ display: selectedTab === "B009" ? "block" : "none" }}>
+    <ItemMasterPage />
+</div>
 
-                                        {/* CHART */}
-                                        <div className="dash-chart-card">
-                                            <Chart dataSource={chartData} palette="Soft Blue">
-                                                <ArgumentAxis argumentType="string" />
+{/* BOM */}
+<div style={{ display: selectedTab === "B011" ? "block" : "none" }}>
+    <BomMasterPage />
+</div>
 
-                                                <Series
-                                                    valueField="ProdQty"
-                                                    argumentField="Key"
-                                                    name="Production Qty"
-                                                    type="bar"
-                                                />
-
-                                                <Series
-                                                    valueField="DeliveryQty"
-                                                    argumentField="Key"
-                                                    name="Delivery Qty"
-                                                    type="line"
-                                                />
-
-                                                <Legend verticalAlignment="top" horizontalAlignment="center" />
-                                                <Tooltip enabled />
-                                            </Chart>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </>
-
-                    ) : selectedTab === "B009" ? (
-
-                        <ItemMasterPage />
-
-                    ) : selectedTab === "B011" ? (
-
-                        <BomMasterPage />
-
-                    ) : (
-
-                        <div className="app-content">
-                            <div className="app-empty-tab">
-                                <h2>{activeTab?.label}</h2>
-                                <p>Chưa có nội dung.</p>
-                            </div>
-                        </div>
-
-                    )
-                }
+{/* DEFAULT */}
+<div style={{
+    display: !["DB01", "B009", "B011"].includes(selectedTab)
+        ? "block"
+        : "none"
+}}>
+    <div className="app-content">
+        <h2>{activeTab?.label}</h2>
+        <p>Chưa có nội dung.</p>
+    </div>
+</div>
 
             </div>
 
