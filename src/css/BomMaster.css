@@ -1,10 +1,192 @@
-.dx-datagrid-rowsview .dx-row > td {
-    border-bottom: 1px solid #eee !important;
-    vertical-align: middle;
-    padding: 6px 10px;
+.bom-page {
+    padding: 16px;
+    background: #f5f7fb;
+    min-height: 100%;
 }
 
-.dx-datagrid-headers .dx-header-row > td {
+.bom-form {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bom-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.bom-header h2 {
+    margin: 0;
+    font-size: 22px;
     font-weight: 600;
-    background: #fafafa;
+}
+
+.bom-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.bom-actions button {
+    border: none;
+    background: #2563eb;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.bom-actions button:hover {
+    opacity: 0.9;
+}
+
+.bom-search-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.bom-field {
+    display: flex;
+    flex-direction: column;
+}
+
+.bom-field label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #444;
+}
+
+.bom-field input,
+.bom-field select {
+    height: 40px;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    padding: 0 12px;
+    outline: none;
+    font-size: 14px;
+    background: white;
+}
+
+.bom-field input:focus,
+.bom-field select:focus {
+    border-color: #2563eb;
+}
+
+.bom-grid-wrapper {
+    background: white;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bom-loading {
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.bom-total {
+    margin-top: 12px;
+    font-weight: 600;
+}
+
+.bom-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.bom-form-grid input,
+.bom-form-grid select {
+    height: 40px;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    padding: 0 12px;
+}
+
+.bom-form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+/* style chung cho button */
+.bom-form-actions button {
+    min-width: 120px;
+    height: 40px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* SEARCH - primary */
+.bom-form-actions button[type="submit"] {
+    background: #2563eb;
+    color: #fff;
+}
+
+.bom-form-actions button[type="submit"]:hover {
+    background: #1e4fd6;
+}
+
+/* REFRESH */
+.bom-form-actions button:nth-child(2) {
+    background: #10b981;
+    color: #fff;
+}
+
+.bom-form-actions button:nth-child(2):hover {
+    background: #0e9f6e;
+}
+
+/* CLEAR */
+.bom-form-actions button:nth-child(3) {
+    background: #f59e0b;
+    color: #fff;
+}
+
+.bom-form-actions button:nth-child(3):hover {
+    background: #d97706;
+}
+
+/* mobile responsive */
+@media (max-width: 768px) {
+    .bom-form-actions {
+        justify-content: stretch;
+    }
+
+    .bom-form-actions button {
+        flex: 1;
+        min-width: unset;
+    }
+}
+.bom-popup-form{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    padding:20px;
+}
+
+.bom-popup-form input{
+    height:40px;
+    padding:0 10px;
+    border:1px solid #ccc;
+    border-radius:6px;
+}
+
+.bom-popup-form button{
+    height:40px;
+    cursor:pointer;
 }

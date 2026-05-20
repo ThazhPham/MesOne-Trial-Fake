@@ -218,6 +218,14 @@ class AuthService {
         return user;
     }
 
+    async post(url, body) {
+
+        return await this.repository.post(
+            url,
+            body
+        );
+    }
+
     // ======================
     // DASHBOARD
     // ======================
@@ -287,24 +295,40 @@ class AuthService {
     }
 
     async getBomMaster(
-        pageIndex = 1,
-        pageSize = 20
-    ) {
+    pageIndex = 1,
+    pageSize = 20,
+    filtering = []
+) {
 
-        const body = {
-            signature: 182,
-            functionCode: "GETDATA",
-            MenuCd: "B011",
-            pageIndex,
-            pageSize
-        };
+    const body = {
 
-        return await this.repository.post(
-            "/Masterdata/DataService/GetData",
-            body
-        );
-    }
+        signature: 182,
+
+        functionCode: "GETDATABYGRID",
+
+        isInit: true,
+
+        gridID: null,
+
+        skip:
+            (pageIndex - 1) * pageSize,
+
+        take:
+            pageSize,
+
+        MenuCd: "B011",
+
+        filtering
+    };
+
+    return await this.repository.post(
+        "/Masterdata/DataService/GetData",
+        body
+    );
 }
+}
+
+
 
 // ======================
 // EXPORT
