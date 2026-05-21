@@ -1,13 +1,4 @@
-import {
-    useCallback,
-    useEffect,
-    useState
-} from "react";
-
-import { useNavigate } from "react-router-dom";
-import { Popup } from "devextreme-react/popup";
-import BomMasterPage from "../pages/BomMaster";
-import ItemMasterPage from "../pages/ItemMaster";
+import { useCallback, useEffect, useState } from "react";
 import apiServer from "../api/apiServer";
 
 import Chart, {
@@ -21,30 +12,12 @@ import { MdFolder, MdDashboard, MdSettings, MdStore } from "react-icons/md";
 
 import "../css/PageDaskBoard.css";
 
-// =====================================
-// FORMAT NUMBER
-// =====================================
-
 const formatNumber = (value) =>
     Number(value || 0).toLocaleString();
 
-// =====================================
-// PARSE DASHBOARD
-// =====================================
+const parseDashboardSection = (data, key) => {
 
-const iconMap = {
-    analytics: <MdDashboard />,
-    settings: <MdSettings />,
-    store: <MdStore />,
-};
-
-const parseDashboardSection = (
-    data,
-    key
-) => {
-
-    const value =
-        data?.Data?.[key];
+    const value = data?.Data?.[key];
 
     if (!value) {
         return [];
@@ -53,14 +26,7 @@ const parseDashboardSection = (
     return JSON.parse(value);
 };
 
-// =====================================
-// DATE VALIDATION
-// =====================================
-
-const getDaysBetween = (
-    startDate,
-    endDate
-) => {
+const getDaysBetween = (startDate, endDate) => {
 
     const start =
         new Date(startDate);
@@ -68,10 +34,8 @@ const getDaysBetween = (
     const end =
         new Date(endDate);
 
-    if (
-        Number.isNaN(start.getTime()) ||
-        Number.isNaN(end.getTime())
-    ) {
+    if (Number.isNaN(start.getTime()) ||
+        Number.isNaN(end.getTime())) {
         return 0;
     }
 
@@ -86,141 +50,19 @@ const getDateRangeError = (
 ) => {
 
     if (!fromDate || !toDate) {
-
         return "Please select both from and to dates";
     }
 
     if (fromDate > toDate) {
-
         return "From date must be before to date";
     }
 
-    if (
-        getDaysBetween(
-            fromDate,
-            toDate
-        ) > 31
-    ) {
-
+    if (getDaysBetween(fromDate, toDate) > 31) {
         return "Date range cannot exceed 31 days";
     }
 
     return null;
 };
-
-
-// Render Content
-
-
-
-
-// =====================================
-// BUILD MENU TREE
-// =====================================
-
-const buildMenuTree = (
-    data,
-    parent = ""
-) => {
-
-    return data
-
-        .filter(
-            (x) =>
-                (x.menuGroup || "")
-                    .trim() ===
-                parent.trim()
-        )
-
-        .sort(
-            (a, b) =>
-                a.sortOrder -
-                b.sortOrder
-        )
-
-        .map((item) => ({
-
-            id:
-                item.menuCd?.trim(),
-
-            label:
-                item.menuNm,
-
-            icon:
-                item.menuIcon,
-
-            url:
-                item.menuUrl,
-
-            children:
-                buildMenuTree(
-                    data,
-                    item.menuCd
-                )
-        }));
-};
-
-const readStoredUser = () => {
-    try {
-        const storedUser =
-            JSON.parse(
-                localStorage.getItem("user")
-            );
-
-        if (storedUser) {
-            return storedUser;
-        }
-    } catch {
-        // Ignore invalid stored user data.
-    }
-
-    try {
-        const currentUser =
-            JSON.parse(
-                localStorage.getItem("currentUser")
-            );
-
-        if (currentUser) {
-            return {
-                userId:
-                    currentUser.uuid ||
-                    "",
-                userName:
-                    currentUser.userName ||
-                    currentUser.data?.displayName ||
-                    currentUser.uuid ||
-                    "",
-                displayName:
-                    currentUser.data?.displayName ||
-                    currentUser.displayName ||
-                    "",
-                role:
-                    currentUser.role ||
-                    "",
-                deptCd:
-                    currentUser.deptCd ||
-                    "",
-                deptNm:
-                    currentUser.deptNm ||
-                    "",
-                positionName:
-                    currentUser.positionName ||
-                    currentUser.position ||
-                    currentUser.role ||
-                    currentUser.deptNm ||
-                    ""
-            };
-        }
-    } catch {
-        // Ignore invalid stored user data.
-    }
-
-    return {};
-};
-
-// =====================================
-// COMPONENT
-// =====================================
 
 export default function PageDashboard() {
 
@@ -295,50 +137,18 @@ export default function PageDashboard() {
     // LOAD MENU
     // =====================================
 
-    useEffect(() => {
+    const loadDashboard = useCallback(async () => {
 
-        const storedUser =
-            JSON.parse(
-                localStorage.getItem("user")
+        const dateRangeError =
+            getDateRangeError(
+                fromDate,
+                toDate
             );
 
-        const menuData =
-            storedUser?.menus || [];
-
-        console.log(
-            "MENU:",
-            menuData
-        );
-
-        const tree =
-            buildMenuTree(
-                menuData
-            );
-
-        console.log(
-            "TREE:",
-            tree
-        );
-
-        setMenuGroups(tree);
-
-        const openObj = {};
-
-        tree.forEach((x) => {
-            openObj[x.id] = true;
-        });
-
-        setOpenMenus(openObj);
-
-    }, []);
-
-    // =====================================
-    // TOGGLE MENU
-    // =====================================
-
-    const toggleMenu = (
-        menuId
-    ) => {
+        if (dateRangeError) {
+            setError(dateRangeError);
+            return;
+        }
 
         setOpenMenus((prev) => ({
             ...prev,
@@ -366,8 +176,17 @@ export default function PageDashboard() {
                     dateRangeError
                 );
 
-                return;
-            }
+            const summaryData =
+                parseDashboardSection(
+                    data,
+                    "SU00TT0001"
+                )[0] || {};
+
+            const chartData =
+                parseDashboardSection(
+                    data,
+                    "CH00TT0004"
+                );
 
             try {
 
@@ -375,47 +194,8 @@ export default function PageDashboard() {
 
                 setError(null);
 
-                const data =
-                    await apiServer.getDashboardData(
-                        fromDate,
-                        toDate
-                    );
-
-                console.log(
-                    "DASHBOARD:",
-                    data
-                );
-
-                const summaryData =
-                    parseDashboardSection(
-                        data,
-                        "SU00TT0001"
-                    )[0] || {};
-
-                const chart =
-                    parseDashboardSection(
-                        data,
-                        "CH00TT0004"
-                    );
-
-                setDashboardData(
-                    summaryData
-                );
-
-                setChartData(chart);
-
-            } catch (err) {
-
-                console.log(err);
-
-                setError(
-                    "Cannot load dashboard data"
-                );
-
-            } finally {
-
-                setLoading(false);
-            }
+            setDashboardData(summaryData);
+            setChartData(chartData);
 
         }, [fromDate, toDate]);
 
@@ -479,9 +259,7 @@ export default function PageDashboard() {
                 }
             ]);
         }
-
-        setSelectedTab(tabId);
-    };
+    }, [fromDate, toDate]);
 
     const handleCloseTab = (
         e,
@@ -561,69 +339,16 @@ export default function PageDashboard() {
             setUserOpen(false);
         };
 
-        if (userOpen) {
-            window.addEventListener("click", handleClickOutside);
-        }
+        const timeoutId =
+            setTimeout(
+                loadDashboard,
+                0
+            );
 
-        return () => {
-            window.removeEventListener("click", handleClickOutside);
-        };
-    }, [userOpen]);
-    // =====================================
-    // RENDER MENU
-    // =====================================
+        return () =>
+            clearTimeout(timeoutId);
 
-    const renderMenu = (
-        menus,
-        level = 0
-    ) => {
-
-        return menus.map((menu) => {
-
-            const isOpen =
-                openMenus[menu.id];
-
-            const hasChildren =
-                menu.children &&
-                menu.children.length > 0;
-
-            return (
-
-                <div
-                    key={menu.id}
-                >
-
-                    <button
-                        className={`app-sidebar__item ${selectedTab ===
-                            menu.id
-                            ? "active"
-                            : ""
-                            }`}
-                        style={{
-                            paddingLeft:
-                                16 +
-                                level * 20
-                        }}
-                        onClick={() => {
-
-                            if (
-                                hasChildren
-                            ) {
-
-                                toggleMenu(
-                                    menu.id
-                                );
-
-                            } else {
-
-                                handleAddTab(
-                                    menu.id,
-                                    menu.label,
-                                    iconMap[menu.icon] || <MdFolder />
-                                );
-                            }
-                        }}
-                    >
+    }, [loadDashboard]);
 
                         <span className="menu-icon">
                             {iconMap[menu.icon] || <MdFolder />}
@@ -803,7 +528,15 @@ export default function PageDashboard() {
 
                             </div>
 
-                        ))}
+                        {/* SEARCH */}
+
+                        <button
+                            className="dash-refresh-btn"
+                            onClick={handleSearch}
+                            disabled={loading}
+                        >
+                            Search
+                        </button>
 
                     </div>
 
@@ -826,27 +559,47 @@ export default function PageDashboard() {
                             )}
                         </div>
 
-                        {userOpen && (
-                            <div
-                                className="user-dropdown"
-                                onClick={(e) =>
-                                    e.stopPropagation()
-                                }
-                            >
-
-                                <div className="user-item"
-                                    onClick={() => {
-                                        setUserOpen(false);
-                                        setShowChangePass(true);
-                                    }}
-                                >
-                                    Đổi mật khẩu
+                                    <div className="dash-kpi-value">
+                                        {formatNumber(
+                                            dashboardData?.NumOfWO
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="user-item logout"
-                                    onClick={handleLogout}
-                                >
-                                    Logout
+                                <div className="dash-kpi-card">
+                                    <div className="dash-kpi-title">
+                                        Plan Quantity
+                                    </div>
+
+                                    <div className="dash-kpi-value">
+                                        {formatNumber(
+                                            dashboardData?.PlanQty
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="dash-kpi-card">
+                                    <div className="dash-kpi-title">
+                                        OK Quantity
+                                    </div>
+
+                                    <div className="dash-kpi-value">
+                                        {formatNumber(
+                                            dashboardData?.ActualQty
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="dash-kpi-card">
+                                    <div className="dash-kpi-title">
+                                        NG Quantity
+                                    </div>
+
+                                    <div className="dash-kpi-value">
+                                        {formatNumber(
+                                            dashboardData?.DefectQty
+                                        )}
+                                    </div>
                                 </div>
 
                             </div>
@@ -859,27 +612,35 @@ export default function PageDashboard() {
                 {/* CONTENT */}
 
                 {/* CONTENT */}
-                {/* DB01 */}
-                <div style={{ display: selectedTab === "DB01" ? "block" : "none" }}>
-                <div className="dash-date-filter">
-                    <input
-                        type="date"
-                        value={temFromDate}
-                        onChange={(e) => setTemFromDate(e.target.value)}
-                    />
+                {
+                    selectedTab === "DB01" ? (
 
-                    <span>~</span>
+                        <>
+                            {/* DASHBOARD */}
+                            <div className="dash-date-filter">
 
-                    <input
-                        type="date"
-                        value={temToDate}
-                        onChange={(e) => setTemToDate(e.target.value)}
-                    />
+                                <input
+                                    type="date"
+                                    value={temFromDate}
+                                    onChange={(e) => setTemFromDate(e.target.value)}
+                                />
 
-                    <button onClick={handleSearch}>
-                        Search
-                    </button>
-                </div>
+                                <span>~</span>
+
+                                <input
+                                    type="date"
+                                    value={temToDate}
+                                    onChange={(e) => setTemToDate(e.target.value)}
+                                />
+
+                                <button
+                                    className="dash-refresh-btn"
+                                    onClick={handleSearch}
+                                >
+                                    Search
+                                </button>
+
+                            </div>
 
     <div className="app-content">
         {loading && <div>Loading...</div>}
