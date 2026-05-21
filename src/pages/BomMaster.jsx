@@ -1,3 +1,807 @@
+// import {
+//     useEffect,
+//     useState,
+//     useCallback
+// } from "react";
+
+// import DataGrid, {
+//     Column,
+//     Paging,
+//     Pager,
+//     SearchPanel
+// } from "devextreme-react/data-grid";
+
+// import { Popup } from "devextreme-react/popup";
+
+// import apiServer from "../api/apiServer";
+
+// import "../css/BomMaster.css";
+
+// export default function BomMasterPage() {
+
+//     // =====================================
+//     // GRID
+//     // =====================================
+
+//     const [data, setData] =
+//         useState([]);
+
+//     const [loading, setLoading] =
+//         useState(false);
+
+//     const [totalRows, setTotalRows] =
+//         useState(0);
+
+//     // =====================================
+//     // PAGING
+//     // =====================================
+
+//     const [pageIndex, setPageIndex] =
+//         useState(1);
+
+//     const [pageSize] =
+//         useState(20);
+
+//     // =====================================
+//     // FORM
+//     // =====================================
+
+//     const defaultForm = {
+
+//         ParentItem: "",
+//         ParentItemNm: "",
+
+//         ComponentItem: "",
+//         ComponentItemNm: "",
+
+//         Quantity: 1,
+
+//         BOMVersion: 1,
+
+//         InventoryUOM: "",
+//         InventoryUOMNm: "",
+
+//         ItemsGroupCode: "",
+//         ItemsGroupName: "",
+
+//         U_ItemClas: "",
+
+//         EONO: "",
+
+//         Remark: "",
+
+//         Status: "D",
+
+//         IsDefaultBOM: "1",
+
+//         UseYN: "1"
+//     };
+
+//     const [formData, setFormData] =
+//         useState(defaultForm);
+
+//     const [query, setQuery] =
+//         useState(defaultForm);
+
+//     const [openPopup, setOpenPopup] =
+//         useState(false);
+
+//     // =====================================
+//     // HANDLE CHANGE
+//     // =====================================
+
+//     const handleChange = (e) => {
+
+//         const { name, value } =
+//             e.target;
+
+//         setFormData((prev) => ({
+//             ...prev,
+//             [name]: value
+//         }));
+//     };
+
+//     // =====================================
+//     // BUILD FILTER
+//     // =====================================
+
+//     const buildFiltering = () => {
+
+//     const filters = [];
+
+//     if (query.ComponentItem) {
+
+//         filters.push({
+//             columName: "ComponentItem",
+//             valueDefault: String(query.ComponentItem),
+//             dataValue: "string",
+//             typeFilter: "contains"
+//         });
+//     }
+
+//     if (query.ComponentItemNm) {
+
+//         filters.push({
+//             columName: "ComponentItemNm",
+//             valueDefault: String(query.ComponentItemNm),
+//             dataValue: "string",
+//             typeFilter: "contains"
+//         });
+//     }
+
+//     if (query.itemCodeM) {
+
+//         filters.push({
+//             columName: "itemCodeM",
+//             valueDefault: String(query.itemCodeM),
+//             dataValue: "string",
+//             typeFilter: "contains"
+//         });
+//     }
+
+//     if (query.itemNameM) {
+
+//         filters.push({
+//             columName: "itemNameM",
+//             valueDefault: String(query.itemNameM),
+//             dataValue: "string",
+//             typeFilter: "contains"
+//         });
+//     }
+
+//     if (query.itemGroupM) {
+
+//         filters.push({
+//             columName: "itemGroupM",
+//             valueDefault: String(query.itemGroupM),
+//             dataValue: "string",
+//             typeFilter: "contains"
+//         });
+//     }
+
+//     if (
+//         query.BOMVersion !== "" &&
+//         query.BOMVersion !== null &&
+//         query.BOMVersion !== undefined
+//     ) {
+
+//         filters.push({
+//             columName: "BOMVersion",
+//             valueDefault: String(query.BOMVersion),
+//             dataValue: "number",
+//             typeFilter: "isEqualto"
+//         });
+//     }
+
+//     if (query.Status !== "") {
+
+//         filters.push({
+//             columName: "Status",
+//             valueDefault: String(query.Status),
+//             dataValue: "string",
+//             typeFilter: "isEqualto"
+//         });
+//     }
+
+//     if (query.IsDefaultBOM !== "") {
+
+//         filters.push({
+//             columName: "IsDefaultBOM",
+//             valueDefault: String(query.IsDefaultBOM),
+//             dataValue: "number",
+//             typeFilter: "isEqualto"
+//         });
+//     }
+
+//     if (query.UseYN !== "") {
+
+//         filters.push({
+//             columName: "UseYN",
+//             valueDefault: String(query.UseYN),
+//             dataValue: "number",
+//             typeFilter: "isEqualto"
+//         });
+//     }
+
+//     return filters;
+// };
+
+//     // =====================================
+//     // LOAD DATA
+//     // =====================================
+
+//     const loadData = useCallback(async (overrideQuery) => {
+
+//     try {
+
+//         setLoading(true);
+
+//         const currentQuery = overrideQuery ?? query;
+
+//         const body = {
+
+//             signature: 182,
+//             functionCode: "GETDATABYGRID",
+//             isInit: true,
+//             gridID: null,
+
+//             skip: (pageIndex - 1) * pageSize,
+//             take: pageSize,
+
+//             MenuCd: "B011",
+
+//             filtering: buildFiltering(currentQuery)
+//         };
+
+//         const res = await apiServer.post(
+//     "/Masterdata/DataService/GetData",
+//     body
+// );
+
+// const list = res?.list || [];
+
+//         const mapped = list.map((x, i) => ({
+
+//             ...x,
+
+//             __id:
+//                 x.BOMDetailId ||
+//                 x.BOMId ||
+//                 `${i}`,
+
+//             ComponentItem: x.ComponentItem || "-",
+//             ComponentItemNm: x.ComponentItemNm || "-",
+//             BOMId: x.BOMId || 0,
+//             BOMVersion: x.BOMVersion || 0,
+//             Quantity: x.Quantity || 0,
+//             InventoryUOMNm: x.InventoryUOMNm || "-",
+//             ItemsGroupName: x.ItemsGroupName || "-",
+//             DefaultWarehouse: x.DefaultWarehouse || "-",
+//             CreateBy: x.CreateBy || "-",
+//             CreateDate: x.CreateDate || "-"
+
+//         }));
+
+//         setData(list.map((x, i) => ({
+//     ...x,
+//     __id: x.BOMId || i
+// })));// ✔ QUAN TRỌNG
+//         setTotalRows(res?.total || list.length);
+
+//     } catch (err) {
+
+//         console.log("LOAD ERROR:", err);
+
+//     } finally {
+
+//         setLoading(false);
+//     }
+
+// }, [pageIndex, pageSize, query]);
+
+//     // =====================================
+//     // FIRST LOAD
+//     // =====================================
+
+//     const [itemList, setItemList] = useState([]);
+
+// useEffect(() => {
+//     const loadItems = async () => {
+//         const res = await apiServer.getItemMaster(1, 1000);
+//         setItemList(res?.Data?.List || []);
+//     };
+
+//     loadItems();
+// }, []);
+
+
+//     // =====================================
+//     // SEARCH
+//     // =====================================
+
+//     const handleSearch = () => {
+
+//     setQuery(formData);
+
+//     setPageIndex(1);
+
+//     setTimeout(() => {
+//         loadData(formData);
+//     }, 0);
+// };
+
+//     // =====================================
+//     // ADD
+//     // =====================================
+
+//     const handleAdd = () => {
+
+//         setFormData(defaultForm);
+
+//         setOpenPopup(true);
+//     };
+
+//     // =====================================
+//     // REFRESH
+//     // =====================================
+
+
+//     const handleRefresh = () => {
+//     loadData(query);
+// };
+    
+//     // =====================================
+//     // CLEAR
+//     // =====================================
+
+//    const handleClear = () => {
+
+//     setFormData(defaultForm);
+//     setQuery(defaultForm);
+//     setPageIndex(1);
+
+//     setTimeout(() => {
+//         loadData(defaultForm);
+//     }, 0);
+// };
+
+//     // =====================================
+//     // PAGING
+//     // =====================================
+
+//     const onOptionChanged = (e) => {
+
+//         if (
+//             e.fullName ===
+//             "paging.pageIndex"
+//         ) {
+
+//             const newPage =
+//                 e.value + 1;
+
+//             if (newPage !== pageIndex) {
+
+//                 setPageIndex(newPage);
+//             }
+//         }
+//     };
+
+//     // =====================================
+//     // SAVE
+//     // =====================================
+
+//     const handleSave = async () => {
+//     try {
+//         if (!formData.ComponentItem) {
+//             alert("Component Item required");
+//             return;
+//         }
+
+//         const payload = {
+//             signature: 182,
+//             MenuCd: "B011",
+//             functionCode: "ADD",
+//             data: {
+//                 ParentItem: formData.ParentItem || "",
+//                 ParentItemNm: formData.ParentItemNm || "",
+
+//                 ComponentItem: formData.ComponentItem || "",
+//                 ComponentItemNm: formData.ComponentItemNm || "",
+
+//                 Quantity: Number(formData.Quantity || 1),
+//                 BOMVersion: Number(formData.BOMVersion || 1),
+
+//                 InventoryUOM: formData.InventoryUOM || "",
+//                 InventoryUOMNm: formData.InventoryUOMNm || "",
+
+//                 ItemsGroupCode: Number(formData.ItemsGroupCode || 0),
+//                 ItemsGroupName: formData.ItemsGroupName || "",
+
+//                 U_ItemClas: formData.U_ItemClas || "",
+//                 EONO: formData.EONO || "",
+
+//                 Remark: formData.Remark || "",
+
+//                 Status: formData.Status || "D",
+
+//                 IsDefaultBOM: formData.IsDefaultBOM === "1",
+//                 UseYN: formData.UseYN === "1"
+//             }
+//         };
+
+//         const res = await apiServer.post(
+//             "/Masterdata/DataService/Update",
+//             payload
+//         );
+
+//         if (res?.raw?.Success) {
+//             alert("Add success");
+
+//             setOpenPopup(false);
+
+//             // reset form sau khi add
+//             setFormData(defaultForm);
+
+//             loadData();
+//         } else {
+//             alert(res?.raw?.SLTN || "Add failed");
+//         }
+
+//     } catch (err) {
+//         console.log(err);
+//         alert("Add error");
+//     }
+// };
+
+//     // =====================================
+//     // UI
+//     // =====================================
+
+//     return (
+
+//         <div className="app-content">
+
+//             <h2>
+//                 BOM Master
+//             </h2>
+
+//             {/* SEARCH */}
+
+//             <form
+//                 className="bom-search-form"
+//                 onSubmit={(e) => {
+
+//                     e.preventDefault();
+
+//                     handleSearch();
+//                 }}
+//             >
+
+//                 <div className="bom-form-grid">
+
+//                    <select
+//                     name="ComponentItem"
+//                     value={formData.ComponentItem}
+//                     onChange={handleChange}
+//                 >
+//                     <option value="">-- Select Item --</option>
+//                     {itemList.map(item => (
+//                         <option key={item.ItemCode} value={item.ItemCode}>
+//                             {item.ItemCode} - {item.ItemName}
+//                         </option>
+//                     ))}
+//                 </select>
+
+//                     <input
+//                         type="text"
+//                         name="ComponentItemNm"
+//                         placeholder="Component Name"
+//                         value={formData.ComponentItemNm}
+//                         onChange={handleChange}
+//                     />
+
+//                     <input
+//                         type="number"
+//                         name="BOMVersion"
+//                         placeholder="Version"
+//                         value={formData.BOMVersion}
+//                         onChange={handleChange}
+//                     />
+
+//                     <select
+//                         name="Status"
+//                         value={formData.Status}
+//                         onChange={handleChange}
+//                     >
+
+//                         <option value="">
+//                             All Status
+//                         </option>
+
+//                         <option value="D">
+//                             Draft
+//                         </option>
+
+//                         <option value="R">
+//                             Release
+//                         </option>
+
+//                     </select>
+
+//                 </div>
+
+//                 <div className="bom-form-actions">
+
+//                     <button
+//                         type="button"
+//                         onClick={handleAdd}
+//                     >
+//                         Add
+//                     </button>
+
+//                     <button type="submit">
+//                         Search
+//                     </button>
+
+//                     <button
+//                         type="button"
+//                         onClick={handleRefresh}
+//                     >
+//                         Refresh
+//                     </button>
+
+//                     <button
+//                         type="button"
+//                         onClick={handleClear}
+//                     >
+//                         Clear
+//                     </button>
+
+//                 </div>
+
+//             </form>
+
+//             {/* GRID */}
+
+//             <DataGrid
+//                 dataSource={data}
+//                 keyExpr="__id"
+//                 showBorders={true}
+//                 columnAutoWidth={true}
+//                 rowAlternationEnabled={true}
+//                 hoverStateEnabled={true}
+//                 remoteOperations={false}
+//                 onOptionChanged={onOptionChanged}
+//                 loading={loading}
+//                 repaintchangesonly={true}
+//             >
+
+//                 <SearchPanel
+//                     visible={true}
+//                 />
+
+//                 <Paging
+//                     pageSize={pageSize}
+//                     pageIndex={pageIndex - 1}
+//                 />
+
+//                 <Pager
+//                     visible={true}
+//                     showInfo={true}
+//                     showPageSizeSelector={false}
+//                     infoText="Page {0} of {1} ({2} items)"
+//                 />
+
+//                 <Column
+//                     dataField="ComponentItem"
+//                     caption="Component Code"
+//                 />
+
+//                 <Column
+//                     dataField="ComponentItemNm"
+//                     caption="Component Name"
+//                 />
+
+//                 <Column
+//                     dataField="BOMId"
+//                     caption="BOM ID"
+//                 />
+
+//                 <Column
+//                     dataField="BOMVersion"
+//                     caption="Version"
+//                 />
+
+//                 <Column
+//                     dataField="Quantity"
+//                     caption="Qty"
+//                 />
+
+//                 <Column
+//                     dataField="InventoryUOMNm"
+//                     caption="UOM"
+//                 />
+
+//                 <Column
+//                     dataField="ItemsGroupName"
+//                     caption="Group"
+//                 />
+
+//                 <Column
+//                     dataField="DefaultWarehouse"
+//                     caption="Warehouse"
+//                 />
+
+//                 <Column
+//                     dataField="CreateBy"
+//                     caption="Created By"
+//                 />
+
+//                 <Column
+//                     dataField="CreateDate"
+//                     caption="Created Date"
+//                 />
+
+//             </DataGrid>
+
+//             {/* POPUP */}
+
+//             <Popup
+//                 visible={openPopup}
+//                 onHiding={() =>
+//                     setOpenPopup(false)
+//                 }
+//                 title="Add BOM"
+//                 showCloseButton={true}
+//                 width={800}
+//                 height={650}
+//             >
+
+//                 <div className="bom-popup-form">
+
+//                     <input
+//                         type="text"
+//                         name="ParentItem"
+//                         placeholder="Parent Item"
+//                         value={formData.ParentItem}
+//                         onChange={handleChange}
+//                     />
+
+//                     <input
+//                         type="text"
+//                         name="ParentItemNm"
+//                         placeholder="Parent Item Name"
+//                         value={formData.ParentItemNm}
+//                         onChange={handleChange}
+//                     />
+
+//                     <input
+//                         type="text"
+//                         name="ComponentItem"
+//                         placeholder="Component Item"
+//                         value={formData.ComponentItem}
+//                         onChange={handleChange}
+//                     />
+
+//                     <input
+//                         type="text"
+//                         name="ComponentItemNm"
+//                         placeholder="Component Item Name"
+//                         value={formData.ComponentItemNm}
+//                         onChange={handleChange}
+//                     />
+
+//                     <input
+//                         type="number"
+//                         name="Quantity"
+//                         placeholder="Quantity"
+//                         value={formData.Quantity}
+//                         onChange={handleChange}
+//                     />
+
+//                     <input
+//                         type="number"
+//                         name="BOMVersion"
+//                         placeholder="BOM Version"
+//                         value={formData.BOMVersion}
+//                         onChange={handleChange}
+//                     />
+
+//                     <input
+//                         type="text"
+//                         name="InventoryUOM"
+//                         placeholder="Inventory UOM"
+//                         value={formData.InventoryUOM}
+//                         onChange={handleChange}
+//                     />
+
+//                     <input
+//                         type="text"
+//                         name="InventoryUOMNm"
+//                         placeholder="Inventory UOM Name"
+//                         value={formData.InventoryUOMNm}
+//                         onChange={handleChange}
+//                     />
+
+//                     <textarea
+//                         name="Remark"
+//                         placeholder="Remark"
+//                         value={formData.Remark}
+//                         onChange={handleChange}
+//                     />
+
+//                     <select
+//                         name="Status"
+//                         value={formData.Status}
+//                         onChange={handleChange}
+//                     >
+
+//                         <option value="D">
+//                             Draft
+//                         </option>
+
+//                         <option value="R">
+//                             Release
+//                         </option>
+
+//                     </select>
+
+//                     <select
+//                         name="IsDefaultBOM"
+//                         value={formData.IsDefaultBOM}
+//                         onChange={handleChange}
+//                     >
+
+//                         <option value="1">
+//                             Yes
+//                         </option>
+
+//                         <option value="0">
+//                             No
+//                         </option>
+
+//                     </select>
+
+//                     <select
+//                         name="UseYN"
+//                         value={formData.UseYN}
+//                         onChange={handleChange}
+//                     >
+
+//                         <option value="1">
+//                             Active
+//                         </option>
+
+//                         <option value="0">
+//                             Inactive
+//                         </option>
+
+//                     </select>
+
+//                     <div className="popup-actions">
+
+//                         <button
+//                             type="button"
+//                             onClick={handleSave}
+//                         >
+//                             Save
+//                         </button>
+
+//                         <button
+//                             type="button"
+//                             onClick={() =>
+//                                 setOpenPopup(false)
+//                             }
+//                         >
+//                             Cancel
+//                         </button>
+
+//                     </div>
+
+//                 </div>
+
+//             </Popup>
+
+//             <div
+//                 style={{
+//                     marginTop: 10
+//                 }}
+//             >
+//                 Total Rows:
+//                 {" "}
+//                 {totalRows}
+//             </div>
+
+//         </div>
+//     );
+// }
+
+
+
+
+
+
+
 import {
     useEffect,
     useState,
@@ -11,15 +815,17 @@ import DataGrid, {
     SearchPanel
 } from "devextreme-react/data-grid";
 
+import { Popup } from "devextreme-react/popup";
+
 import apiServer from "../api/apiServer";
 
 import "../css/BomMaster.css";
-import { Popup } from "devextreme-react/popup";
+
 export default function BomMasterPage() {
 
-    // =====================================
+    // =========================
     // GRID
-    // =====================================
+    // =========================
 
     const [data, setData] =
         useState([]);
@@ -30,9 +836,9 @@ export default function BomMasterPage() {
     const [totalRows, setTotalRows] =
         useState(0);
 
-    // =====================================
+    // =========================
     // PAGING
-    // =====================================
+    // =========================
 
     const [pageIndex, setPageIndex] =
         useState(1);
@@ -40,85 +846,169 @@ export default function BomMasterPage() {
     const [pageSize] =
         useState(20);
 
-    // =====================================
+    // =========================
     // FORM
-    // =====================================
+    // =========================
 
     const defaultForm = {
 
-    ParentItem: "",
-    ParentItemNm: "",
+        ParentItem: "",
+        ParentItemNm: "",
 
-    ComponentItem: "",
-    ComponentItemNm: "",
+        ComponentItem: "",
+        ComponentItemNm: "",
 
-    Quantity: 1,
+        Quantity: 1,
 
-    BOMVersion: 0,
+        BOMVersion: 1,
 
-    InventoryUOM: "",
-    InventoryUOMNm: "",
+        InventoryUOM: "",
+        InventoryUOMNm: "",
 
-    ItemsGroupCode: "",
-    ItemsGroupName: "",
+        ItemsGroupCode: "",
+        ItemsGroupName: "",
 
-    U_ItemClas: "",
+        U_ItemClas: "",
 
-    EONO: "",
+        EONO: "",
 
-    Remark: "",
+        Remark: "",
 
-    Status: "D",
+        Status: "D",
 
-    IsDefaultBOM: "1",
+        IsDefaultBOM: "1",
 
-    UseYN: "1"
-};
+        UseYN: "1"
+    };
 
     const [formData, setFormData] =
         useState(defaultForm);
 
-    const [openPopup, setOpenPopup] = useState(false);
+    const [query, setQuery] =
+        useState(defaultForm);
 
-    // =====================================
+    const [openPopup, setOpenPopup] =
+        useState(false);
+
+    // =========================
+    // ITEM LIST
+    // =========================
+
+    const [itemList, setItemList] =
+        useState([]);
+
+    // =========================
+    // LOAD ITEM MASTER
+    // =========================
+
+    useEffect(() => {
+
+    const loadItems = async () => {
+
+        try {
+
+            const res =
+                await apiServer.getItemMaster(
+                    1,
+                    1000
+                );
+
+            console.log(
+                "ITEM MASTER RAW:",
+                res
+            );
+
+            // FIX HERE
+            const list =
+                res?.raw?.Data?.List ||
+                res?.Data?.List ||
+                res?.list ||
+                [];
+
+            console.log(
+                "ITEM LIST:",
+                list
+            );
+
+            setItemList(
+                Array.isArray(list)
+                    ? list
+                    : []
+            );
+
+        } catch (err) {
+
+            console.log(err);
+
+            setItemList([]);
+        }
+    };
+
+    loadItems();
+
+}, []);
+
+    // =========================
     // HANDLE CHANGE
-    // =====================================
+    // =========================
 
     const handleChange = (e) => {
 
         const { name, value } =
             e.target;
 
-        setFormData((prev) => ({
+        // AUTO FILL ITEM NAME
+        if (name === "ComponentItem") {
+
+            const selected =
+                itemList.find(
+                    x =>
+                        x.ItemCode === value
+                );
+
+            setFormData(prev => ({
+
+                ...prev,
+
+                ComponentItem:
+                    value,
+
+                ComponentItemNm:
+                    selected?.ItemName || ""
+            }));
+
+            return;
+        }
+
+        setFormData(prev => ({
+
             ...prev,
+
             [name]: value
         }));
     };
 
-
-    const [query, setQuery] = useState(defaultForm);
-
-    // HANDLE SEARCH
-
-
-    // =====================================
+    // =========================
     // BUILD FILTER
-    // =====================================
+    // =========================
 
-
-    const buildFiltering = () => {
+    const buildFiltering = (
+        queryData
+    ) => {
 
         const filters = [];
 
-        // TREE CODE
-        if (formData.ComponentItem) {
+        if (queryData.ComponentItem) {
 
             filters.push({
+
                 columName:
                     "ComponentItem",
 
                 valueDefault:
-                    formData.ComponentItem,
+                    String(
+                        queryData.ComponentItem
+                    ),
 
                 dataValue:
                     "string",
@@ -128,15 +1018,17 @@ export default function BomMasterPage() {
             });
         }
 
-        // TREE NAME
-        if (formData.ComponentItemNm) {
+        if (queryData.ComponentItemNm) {
 
             filters.push({
+
                 columName:
                     "ComponentItemNm",
 
                 valueDefault:
-                    formData.ComponentItemNm,
+                    String(
+                        queryData.ComponentItemNm
+                    ),
 
                 dataValue:
                     "string",
@@ -146,69 +1038,21 @@ export default function BomMasterPage() {
             });
         }
 
-        // ITEM CODE NODE
-        if (formData.itemCodeM) {
+        if (
+            queryData.BOMVersion !== "" &&
+            queryData.BOMVersion !== null &&
+            queryData.BOMVersion !== undefined
+        ) {
 
             filters.push({
-                columName:
-                    "itemCodeM",
 
-                valueDefault:
-                    formData.itemCodeM,
-
-                dataValue:
-                    "string",
-
-                typeFilter:
-                    "contains"
-            });
-        }
-
-        // ITEM NAME NODE
-        if (formData.itemNameM) {
-
-            filters.push({
-                columName:
-                    "itemNameM",
-
-                valueDefault:
-                    formData.itemNameM,
-
-                dataValue:
-                    "string",
-
-                typeFilter:
-                    "contains"
-            });
-        }
-
-        // ITEM GROUP
-        if (formData.itemGroupM) {
-
-            filters.push({
-                columName:
-                    "itemGroupM",
-
-                valueDefault:
-                    formData.itemGroupM,
-
-                dataValue:
-                    "string",
-
-                typeFilter:
-                    "contains"
-            });
-        }
-
-        // VERSION
-        if (formData.BOMVersion) {
-
-            filters.push({
                 columName:
                     "BOMVersion",
 
                 valueDefault:
-                    formData.BOMVersion,
+                    String(
+                        queryData.BOMVersion
+                    ),
 
                 dataValue:
                     "number",
@@ -218,54 +1062,20 @@ export default function BomMasterPage() {
             });
         }
 
-        // STATUS
-        if (formData.Status) {
+        if (queryData.Status) {
 
             filters.push({
+
                 columName:
                     "Status",
 
                 valueDefault:
-                    formData.Status,
+                    String(
+                        queryData.Status
+                    ),
 
                 dataValue:
-                    "number",
-
-                typeFilter:
-                    "isEqualto"
-            });
-        }
-
-        // DEFAULT BOM
-        if (formData.IsDefaultBOM) {
-
-            filters.push({
-                columName:
-                    "IsDefaultBOM",
-
-                valueDefault:
-                    formData.IsDefaultBOM,
-
-                dataValue:
-                    "number",
-
-                typeFilter:
-                    "isEqualto"
-            });
-        }
-
-        // ACTIVE
-        if (formData.UseYN) {
-
-            filters.push({
-                columName:
-                    "UseYN",
-
-                valueDefault:
-                    formData.UseYN,
-
-                dataValue:
-                    "number",
+                    "string",
 
                 typeFilter:
                     "isEqualto"
@@ -275,387 +1085,500 @@ export default function BomMasterPage() {
         return filters;
     };
 
-    // =====================================
+    // =========================
     // LOAD DATA
-    // =====================================
+    // =========================
 
     const loadData =
-        useCallback(async () => {
+        useCallback(
+            async (
+                overrideQuery
+            ) => {
 
-            try {
+                try {
 
-                setLoading(true);
-                const body = {
+                    setLoading(true);
 
-                    signature: 182,
+                    const currentQuery =
+                        overrideQuery ??
+                        query;
 
-                    functionCode:
-                        "GETDATABYGRID",
+                    const body = {
 
-                    isInit: true,
+                        signature: 182,
 
-                    gridID: null,
+                        functionCode:
+                            "GETDATABYGRID",
 
-                    skip:
-                        (pageIndex - 1)
-                        * pageSize,
+                        isInit: true,
 
-                    take:
-                        pageSize,
+                        gridID: null,
 
-                    MenuCd:
-                        "B011",
+                        skip:
+                            (pageIndex - 1)
+                            * pageSize,
 
-                    filtering:
-                        buildFiltering(query)
-                };
+                        take:
+                            pageSize,
 
-                console.log(
-                    "REQUEST BODY:",
-                    body
-                );
+                        MenuCd:
+                            "B011",
 
-                    await apiServer.getBomMaster(
-        pageIndex,
-        pageSize,
-        buildFiltering()
-    );
+                        filtering:
+                            buildFiltering(
+                                currentQuery
+                            )
+                    };
 
-                console.log("FULL RESPONSE:", res);
-                console.log(
-                    "BOM API:",
-                    res
-                );
+                    console.log(
+                        "LOAD BODY:",
+                        body
+                    );
 
-                // SAFE PARSE
-                const list =
-                    res?.Data?.List || [];
-                // NORMALIZE
-                const mapped =
-                    list.map((x, i) => ({
+                    const res =
+                        await apiServer.post(
+                            "/Masterdata/DataService/GetData",
+                            body
+                        );
 
-                        ...x,
+                    console.log(
+                        "LOAD RES:",
+                        res
+                    );
 
-                        __id:
-                            x.BOMDetailId ||
-                            x.BOMId ||
-                            x.ComponentItem ||
-                            `row_${i}`,
+                    const list =
+                        res?.list || [];
 
-                        ComponentItem:
-                            x.ComponentItem || "-",
+                    setData(
 
-                        ComponentItemNm:
-                            x.ComponentItemNm || "-",
+                        list.map(
+                            (
+                                x,
+                                i
+                            ) => ({
 
-                        BOMId:
-                            x.BOMId || "-",
+                                ...x,
 
-                        BOMVersion:
-                            x.BOMVersion || 0,
+                                __id:
+                                    x.BOMId ||
+                                    i,
 
-                        Quantity:
-                            x.Quantity || 0,
+                                ComponentItem:
+                                    x.ComponentItem ||
+                                    "-",
 
-                        InventoryUOMNm:
-                            x.InventoryUOMNm || "-",
+                                ComponentItemNm:
+                                    x.ComponentItemNm ||
+                                    "-",
 
-                        DefaultWarehouse:
-                            x.DefaultWarehouse || "-",
+                                BOMId:
+                                    x.BOMId ||
+                                    0,
 
-                        ItemsGroupName:
-                            x.ItemsGroupName || "-",
+                                BOMVersion:
+                                    x.BOMVersion ||
+                                    0,
 
-                        CreateBy:
-                            x.CreateBy || "-",
+                                Quantity:
+                                    x.Quantity ||
+                                    0,
 
-                        CreateDate:
-                            x.CreateDate || "-"
-                    }));
+                                InventoryUOMNm:
+                                    x.InventoryUOMNm ||
+                                    "-",
 
-                setData(mapped);
+                                ItemsGroupName:
+                                    x.ItemsGroupName ||
+                                    "-",
 
-                setTotalRows(
-                    mapped[0]?.totalRows ||
-                    res?.TotalRows ||
-                    mapped.length
-                );
+                                DefaultWarehouse:
+                                    x.DefaultWarehouse ||
+                                    "-",
 
-            } catch (err) {
+                                CreateBy:
+                                    x.CreateBy ||
+                                    "-",
 
-                console.log(
-                    "BOM ERROR:",
-                    err
-                );
+                                CreateDate:
+                                    x.CreateDate ||
+                                    "-"
+                            }))
+                    );
 
-            } finally {
+                    setTotalRows(
+                        res?.total ||
+                        list.length
+                    );
 
-                setLoading(false);
-            }
+                } catch (err) {
 
-        }, [
-            pageIndex,
-            pageSize,
-            query
-        ]);
+                    console.log(
+                        "LOAD ERROR:",
+                        err
+                    );
 
-    // =====================================
+                } finally {
+
+                    setLoading(false);
+                }
+
+            },
+            [
+                pageIndex,
+                pageSize,
+                query
+            ]
+        );
+
+    // =========================
     // FIRST LOAD
-    // =====================================
+    // =========================
 
     useEffect(() => {
-        loadData();
-    }, [pageIndex, pageSize, query]);
 
-    // =====================================
+        loadData();
+
+    }, [pageIndex]);
+
+    // =========================
     // SEARCH
-    // =====================================
+    // =========================
 
     const handleSearch = () => {
-        setQuery(formData); // CHỐT dữ liệu search
-        setPageIndex(1);    // reset page nếu cần
+
+        setQuery(formData);
+
+        setPageIndex(1);
+
+        setTimeout(() => {
+
+            loadData(formData);
+
+        }, 0);
     };
+
+    // =========================
+    // ADD
+    // =========================
 
     const handleAdd = () => {
-        setFormData (defaultForm);
-        setOpenPopup(true);
-    }
-    // =====================================
-    // REFRESH
-    // =====================================
 
-    const handleRefresh = () => {
-        loadData();
+        setFormData(defaultForm);
+
+        setOpenPopup(true);
     };
 
-    // =====================================
+    // =========================
+    // REFRESH
+    // =========================
+
+    const handleRefresh = () => {
+
+        loadData(query);
+    };
+
+    // =========================
     // CLEAR
-    // =====================================
+    // =========================
 
     const handleClear = () => {
 
         setFormData(defaultForm);
 
+        setQuery(defaultForm);
+
         setPageIndex(1);
+
+        setTimeout(() => {
+
+            loadData(defaultForm);
+
+        }, 0);
     };
 
-    // =====================================
+    // =========================
     // PAGING
-    // =====================================
+    // =========================
 
     const onOptionChanged = (e) => {
 
-    if (e.fullName === "paging.pageIndex") {
+        if (
+            e.fullName ===
+            "paging.pageIndex"
+        ) {
 
-        const newPage = e.value + 1;
+            const newPage =
+                e.value + 1;
 
-        if (newPage !== pageIndex) {
-            setPageIndex(newPage);
+            if (
+                newPage !==
+                pageIndex
+            ) {
+
+                setPageIndex(
+                    newPage
+                );
+            }
         }
-    }
-};
+    };
 
-const handleSave = async () => {
+    // =========================
+    // SAVE
+    // =========================
 
-    try {
+    const handleSave =
+        async () => {
 
-        const body = {
+            try {
 
-            signature: 182,
+                if (
+                    !formData.ParentItem
+                ) {
 
-            MenuCd: "B011",
+                    alert(
+                        "Parent Item required"
+                    );
 
-            functionCode: "ADD",
+                    return;
+                }
 
-            data: {
+                if (
+                    !formData.ComponentItem
+                ) {
 
-                BOMDetailId:
-                    formData.BOMDetailId || 0,
+                    alert(
+                        "Component Item required"
+                    );
 
-                BOMId:
-                    formData.BOMId || 0,
+                    return;
+                }
 
-                BOMRefId:
-                    formData.BOMRefId || 0,
+                const payload = {
 
-                ParentItem:
-                    formData.ParentItem || null,
+                    signature: 182,
 
-                ComponentItem:
-                    formData.ComponentItem,
+                    MenuCd: "B011",
 
-                ComponentItemNm:
-                    formData.ComponentItemNm,
+                    functionCode:
+                        "ADD",
 
-                BOMVersion:
-                    formData.BOMVersion,
+                    data: {
 
-                Quantity:
-                    formData.Quantity || 0,
+                        ParentItem:
+                            formData.ParentItem,
 
-                InventoryUOMNm:
-                    formData.InventoryUOMNm,
+                        ParentItemNm:
+                            formData.ParentItemNm,
 
-                DefaultWarehouse:
-                    formData.DefaultWarehouse,
+                        ComponentItem:
+                            formData.ComponentItem,
 
-                UseYN:
-                    formData.UseYN,
+                        ComponentItemNm:
+                            formData.ComponentItemNm,
 
-                Status:
-                    formData.Status
+                        Quantity:
+                            Number(
+                                formData.Quantity
+                            ),
+
+                        BOMVersion:
+                            Number(
+                                formData.BOMVersion
+                            ),
+
+                        InventoryUOM:
+                            formData.InventoryUOM,
+
+                        InventoryUOMNm:
+                            formData.InventoryUOMNm,
+
+                        ItemsGroupCode:
+                            formData.ItemsGroupCode,
+
+                        ItemsGroupName:
+                            formData.ItemsGroupName,
+
+                        U_ItemClas:
+                            formData.U_ItemClas,
+
+                        EONO:
+                            formData.EONO,
+
+                        Remark:
+                            formData.Remark,
+
+                        Status:
+                            formData.Status,
+
+                        IsDefaultBOM:
+                            formData.IsDefaultBOM ===
+                            "1",
+
+                        UseYN:
+                            formData.UseYN ===
+                            "1"
+                    }
+                };
+
+                console.log(
+                    "ADD BODY:",
+                    payload
+                );
+
+                const res =
+                    await apiServer.post(
+                        "/Masterdata/DataService/Update",
+                        payload
+                    );
+
+                console.log(
+                    "ADD RESPONSE:",
+                    res
+                );
+
+                alert(
+                    "Add success"
+                );
+
+                setOpenPopup(
+                    false
+                );
+
+                setFormData(
+                    defaultForm
+                );
+
+                loadData();
+
+            } catch (err) {
+
+                console.log(
+                    "ADD ERROR:",
+                    err
+                );
+
+                alert(
+                    "Add failed"
+                );
             }
         };
 
-        console.log("SAVE BODY:", body);
-
-        const res =
-            await apiServer.post(
-                "/Masterdata/DataService/Update",
-                body
-            );
-
-        console.log("SAVE RES:", res);
-
-        setOpenPopup(false);
-
-        loadData();
-
-    } catch (err) {
-
-        console.log("SAVE ERROR:", err);
-    }
-};
-    // =====================================
+    // =========================
     // UI
-    // =====================================
+    // =========================
+
     return (
 
         <div className="app-content">
 
-            <h2>BOM Master</h2>
+            <h2>
+                BOM Master
+            </h2>
 
-            {/* =====================================
-                SEARCH FORM
-            ===================================== */}
+            {/* SEARCH */}
 
             <form
                 className="bom-search-form"
                 onSubmit={(e) => {
+
                     e.preventDefault();
+
                     handleSearch();
                 }}
             >
 
                 <div className="bom-form-grid">
 
-                    <input
-                        type="text"
+                    <select
                         name="ComponentItem"
-                        placeholder="Tree Code"
-                        value={formData.ComponentItem}
-                        onChange={handleChange}
-                    />
+                        value={
+                            formData.ComponentItem
+                        }
+                        onChange={
+                            handleChange
+                        }
+                    >
+
+                        <option value="">
+                            -- Select Item --
+                        </option>
+
+                        {itemList.map(
+                            item => (
+
+                                <option
+                                    key={
+                                        item.ItemCode
+                                    }
+
+                                    value={
+                                        item.ItemCode
+                                    }
+                                >
+                                    {item.ItemCode}
+                                    {" - "}
+                                    {item.ItemName}
+                                </option>
+                            )
+                        )}
+
+                    </select>
 
                     <input
                         type="text"
                         name="ComponentItemNm"
-                        placeholder="Tree Name"
-                        value={formData.ComponentItemNm}
-                        onChange={handleChange}
-                    />
-
-                    <input
-                        type="text"
-                        name="itemCodeM"
-                        placeholder="Item Code Node"
-                        value={formData.itemCodeM}
-                        onChange={handleChange}
-                    />
-
-                    <input
-                        type="text"
-                        name="itemNameM"
-                        placeholder="Item Name Node"
-                        value={formData.itemNameM}
-                        onChange={handleChange}
+                        placeholder="Component Name"
+                        value={
+                            formData.ComponentItemNm
+                        }
+                        readOnly
                     />
 
                     <input
                         type="number"
                         name="BOMVersion"
                         placeholder="Version"
-                        value={formData.BOMVersion}
-                        min={1}
-                        max={10}
-                        onChange={handleChange}
+                        value={
+                            formData.BOMVersion
+                        }
+                        onChange={
+                            handleChange
+                        }
                     />
 
                     <select
                         name="Status"
-                        value={formData.Status}
-                        onChange={handleChange}
+                        value={
+                            formData.Status
+                        }
+                        onChange={
+                            handleChange
+                        }
                     >
+
                         <option value="">
                             All Status
                         </option>
 
-                        <option value="1">
-                            Active
+                        <option value="D">
+                            Draft
                         </option>
 
-                        <option value="0">
-                            Inactive
-                        </option>
-                    </select>
-
-                    <select
-                        name="IsDefaultBOM"
-                        value={formData.IsDefaultBOM}
-                        onChange={handleChange}
-                    >
-                        <option value="">
-                            Default BOM
+                        <option value="R">
+                            Release
                         </option>
 
-                        <option value="1">
-                            Yes
-                        </option>
-
-                        <option value="0">
-                            No
-                        </option>
-                    </select>
-
-                    <select
-                        name="UseYN"
-                        value={formData.UseYN}
-                        onChange={handleChange}
-                    >
-                        <option value="">
-                            Active
-                        </option>
-
-                        <option value="1">
-                            Yes
-                        </option>
-
-                        <option value="0">
-                            No
-                        </option>
                     </select>
 
                 </div>
-
-                {/* =====================================
-                    ACTIONS
-                ===================================== */}
 
                 <div className="bom-form-actions">
 
                     <button
                         type="button"
-                        onClick={handleSave}
+                        onClick={
+                            handleAdd
+                        }
                     >
                         Add
                     </button>
@@ -666,14 +1589,18 @@ const handleSave = async () => {
 
                     <button
                         type="button"
-                        onClick={handleRefresh}
+                        onClick={
+                            handleRefresh
+                        }
                     >
                         Refresh
                     </button>
 
                     <button
                         type="button"
-                        onClick={handleClear}
+                        onClick={
+                            handleClear
+                        }
                     >
                         Clear
                     </button>
@@ -682,9 +1609,7 @@ const handleSave = async () => {
 
             </form>
 
-            {/* =====================================
-                GRID
-            ===================================== */}
+            {/* GRID */}
 
             <DataGrid
                 dataSource={data}
@@ -694,20 +1619,29 @@ const handleSave = async () => {
                 rowAlternationEnabled={true}
                 hoverStateEnabled={true}
                 remoteOperations={false}
-                onOptionChanged={onOptionChanged}
+                onOptionChanged={
+                    onOptionChanged
+                }
                 loading={loading}
             >
 
-                <SearchPanel visible={true} />
+                <SearchPanel
+                    visible={true}
+                />
 
-                <Paging pageSize={pageSize} 
-                 pageIndex={pageIndex - 1} />
+                <Paging
+                    pageSize={pageSize}
+                    pageIndex={
+                        pageIndex - 1
+                    }
+                />
 
                 <Pager
                     visible={true}
                     showInfo={true}
-                    showPageSizeSelector={false}
-                    infoText="Page {0} of {1} ({2} items)"
+                    showPageSizeSelector={
+                        false
+                    }
                 />
 
                 <Column
@@ -733,7 +1667,6 @@ const handleSave = async () => {
                 <Column
                     dataField="Quantity"
                     caption="Qty"
-                    dataType="number"
                 />
 
                 <Column
@@ -763,204 +1696,235 @@ const handleSave = async () => {
 
             </DataGrid>
 
+            {/* POPUP */}
+
             <Popup
-    visible={openPopup}
-    onHiding={() => setOpenPopup(false)}
-    title="Add BOM"
-    showCloseButton={true}
-    width={800}
-    height={600}
->
+                visible={openPopup}
+                onHiding={() =>
+                    setOpenPopup(false)
+                }
+                title="Add BOM"
+                showCloseButton={true}
+                width={800}
+                height={650}
+            >
 
-    <div className="bom-popup-form">
+                <div className="bom-popup-form">
 
-    {/* Parent Item */}
-    <input
-        type="text"
-        name="ParentItem"
-        placeholder="Parent Item"
-        value={formData.ParentItem || ""}
-        onChange={handleChange}
-    />
+                    <input
+                        type="text"
+                        name="ParentItem"
+                        placeholder="Parent Item"
+                        value={
+                            formData.ParentItem
+                        }
+                        onChange={
+                            handleChange
+                        }
+                    />
 
-    {/* Parent Item Name */}
-    <input
-        type="text"
-        name="ParentItemNm"
-        placeholder="Parent Item Name"
-        value={formData.ParentItemNm || ""}
-        onChange={handleChange}
-    />
+                    <input
+                        type="text"
+                        name="ParentItemNm"
+                        placeholder="Parent Item Name"
+                        value={
+                            formData.ParentItemNm
+                        }
+                        onChange={
+                            handleChange
+                        }
+                    />
 
-    {/* Component Item */}
-    <input
-        type="text"
-        name="ComponentItem"
-        placeholder="Component Item"
-        value={formData.ComponentItem || ""}
-        onChange={handleChange}
-    />
+                    <select
+                        name="ComponentItem"
+                        value={
+                            formData.ComponentItem
+                        }
+                        onChange={
+                            handleChange
+                        }
+                    >
 
-    {/* Component Item Name */}
-    <input
-        type="text"
-        name="ComponentItemNm"
-        placeholder="Component Item Name"
-        value={formData.ComponentItemNm || ""}
-        onChange={handleChange}
-    />
+                        <option value="">
+                            -- Select Item --
+                        </option>
 
-    {/* Quantity */}
-    <input
-        type="number"
-        name="Quantity"
-        placeholder="Quantity"
-        value={formData.Quantity || 0}
-        onChange={handleChange}
-    />
+                        {itemList.map(
+                            item => (
 
-    {/* BOM Version */}
-    <input
-        type="number"
-        name="BOMVersion"
-        placeholder="BOM Version"
-        value={formData.BOMVersion || 0}
-        onChange={handleChange}
-    />
+                                <option
+                                    key={
+                                        item.ItemCode
+                                    }
 
-    {/* UOM */}
-    <input
-        type="text"
-        name="InventoryUOM"
-        placeholder="Inventory UOM"
-        value={formData.InventoryUOM || ""}
-        onChange={handleChange}
-    />
+                                    value={
+                                        item.ItemCode
+                                    }
+                                >
+                                    {item.ItemCode}
+                                    {" - "}
+                                    {item.ItemName}
+                                </option>
+                            )
+                        )}
 
-    {/* UOM Name */}
-    <input
-        type="text"
-        name="InventoryUOMNm"
-        placeholder="Inventory UOM Name"
-        value={formData.InventoryUOMNm || ""}
-        onChange={handleChange}
-    />
+                    </select>
 
-    {/* Item Group Code */}
-    <input
-        type="number"
-        name="ItemsGroupCode"
-        placeholder="Items Group Code"
-        value={formData.ItemsGroupCode || ""}
-        onChange={handleChange}
-    />
+                    <input
+                        type="text"
+                        name="ComponentItemNm"
+                        value={
+                            formData.ComponentItemNm
+                        }
+                        readOnly
+                    />
 
-    {/* Item Group Name */}
-    <input
-        type="text"
-        name="ItemsGroupName"
-        placeholder="Items Group Name"
-        value={formData.ItemsGroupName || ""}
-        onChange={handleChange}
-    />
+                    <input
+                        type="number"
+                        name="Quantity"
+                        placeholder="Quantity"
+                        value={
+                            formData.Quantity
+                        }
+                        onChange={
+                            handleChange
+                        }
+                    />
 
-    {/* Item Class */}
-    <input
-        type="text"
-        name="U_ItemClas"
-        placeholder="Item Class"
-        value={formData.U_ItemClas || ""}
-        onChange={handleChange}
-    />
+                    <input
+                        type="number"
+                        name="BOMVersion"
+                        placeholder="BOM Version"
+                        value={
+                            formData.BOMVersion
+                        }
+                        onChange={
+                            handleChange
+                        }
+                    />
 
-    {/* EONO */}
-    <input
-        type="text"
-        name="EONO"
-        placeholder="EONO"
-        value={formData.EONO || ""}
-        onChange={handleChange}
-    />
+                    <input
+                        type="text"
+                        name="InventoryUOM"
+                        placeholder="Inventory UOM"
+                        value={
+                            formData.InventoryUOM
+                        }
+                        onChange={
+                            handleChange
+                        }
+                    />
 
-    {/* Remark */}
-    <textarea
-        name="Remark"
-        placeholder="Remark"
-        value={formData.Remark || ""}
-        onChange={handleChange}
-    />
+                    <input
+                        type="text"
+                        name="InventoryUOMNm"
+                        placeholder="Inventory UOM Name"
+                        value={
+                            formData.InventoryUOMNm
+                        }
+                        onChange={
+                            handleChange
+                        }
+                    />
 
-    {/* Status */}
-    <select
-        name="Status"
-        value={formData.Status || ""}
-        onChange={handleChange}
-    >
-        <option value="">
-            Select Status
-        </option>
+                    <textarea
+                        name="Remark"
+                        placeholder="Remark"
+                        value={
+                            formData.Remark
+                        }
+                        onChange={
+                            handleChange
+                        }
+                    />
 
-        <option value="R">
-            Release
-        </option>
+                    <select
+                        name="Status"
+                        value={
+                            formData.Status
+                        }
+                        onChange={
+                            handleChange
+                        }
+                    >
 
-        <option value="D">
-            Draft
-        </option>
-    </select>
+                        <option value="D">
+                            Draft
+                        </option>
 
-    {/* Default BOM */}
-    <select
-        name="IsDefaultBOM"
-        value={formData.IsDefaultBOM || "1"}
-        onChange={handleChange}
-    >
-        <option value="1">
-            Yes
-        </option>
+                        <option value="R">
+                            Release
+                        </option>
 
-        <option value="0">
-            No
-        </option>
-    </select>
+                    </select>
 
-    {/* Use YN */}
-    <select
-        name="UseYN"
-        value={formData.UseYN || "1"}
-        onChange={handleChange}
-    >
-        <option value="1">
-            Active
-        </option>
+                    <select
+                        name="IsDefaultBOM"
+                        value={
+                            formData.IsDefaultBOM
+                        }
+                        onChange={
+                            handleChange
+                        }
+                    >
 
-        <option value="0">
-            Inactive
-        </option>
-    </select>
+                        <option value="1">
+                            Yes
+                        </option>
 
-    {/* BUTTON */}
-    <div className="popup-actions">
+                        <option value="0">
+                            No
+                        </option>
 
-        <button
-            type="button"
-            onClick={handleSave}
-        >
-            Save
-        </button>
+                    </select>
 
-        <button
-            type="button"
-            onClick={() => setOpenPopup(false)}
-        >
-            Cancel
-        </button>
+                    <select
+                        name="UseYN"
+                        value={
+                            formData.UseYN
+                        }
+                        onChange={
+                            handleChange
+                        }
+                    >
 
-    </div>
+                        <option value="1">
+                            Active
+                        </option>
 
-</div>
+                        <option value="0">
+                            Inactive
+                        </option>
 
-</Popup>
+                    </select>
+
+                    <div className="popup-actions">
+
+                        <button
+                            type="button"
+                            onClick={
+                                handleSave
+                            }
+                        >
+                            Save
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setOpenPopup(
+                                    false
+                                )
+                            }
+                        >
+                            Cancel
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </Popup>
 
             <div
                 style={{

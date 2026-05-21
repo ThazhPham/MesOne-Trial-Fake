@@ -59,10 +59,10 @@ export default function ItemMasterPage() {
                 );
 
                 // API ARRAY
-                const list =
-                    Array.isArray(res?.Data)
-                        ? res.Data
-                        : [];
+               const list =
+    Array.isArray(res?.list)
+        ? res.list
+        : [];
 
                 setData(list);
 
@@ -90,7 +90,6 @@ export default function ItemMasterPage() {
     // =========================
 
     useEffect(() => {
-
         loadData();
     }, [loadData]);
 

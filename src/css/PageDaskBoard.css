@@ -443,13 +443,14 @@
 /* ===================================== */
 
 .dash-date-filter {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
+    align-self: flex-end;
     margin-left: auto;
+}
 
-    flex-shrink: 0;
+.app-content {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
 }
 
 .dash-date-filter>div {
